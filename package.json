@@ -1,0 +1,37 @@
+{
+  "name": "xiaosu_bc_extension",
+  "version": "0.0.1",
+  "description": "https://iceriny.github.io/XiaosuBCExtension/userLoad.user.js",
+  "main": "rollup.config.js",
+  "keywords": [],
+  "author": "XiaoSu",
+  "license": "ISC",
+  "dependencies": {
+    "@types/randomcolor": "^0.5.9",
+    "bc-stubs": "^101.0.0",
+    "bondage-club-mod-sdk": "^1.1.0",
+    "lz-string": "^1.5.0",
+    "randomcolor": "^0.6.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/lz-string": "^1.5.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "eslint": "^8.56.0",
+    "install": "^0.13.0",
+    "npm": "^10.4.0",
+    "rollup": "^4.9.6",
+    "rollup-plugin-progress": "^1.1.2",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "terser": "^5.27.0",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "build": "rollup -c rollup.config.mjs",
+    "dev": "rollup -c rollup.dev.config.mjs"
+  }
+}
