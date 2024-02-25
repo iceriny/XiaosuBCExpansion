@@ -1,0 +1,41 @@
+import { ModuleInfo, ModulePriority } from "../Models/ModuleInfo";
+
+/**
+ * 模块的基础抽象类
+ */
+export abstract class BaseModule {
+    /** 模块的信息 */
+    Info: ModuleInfo = {
+        name: "base",
+        priority: ModulePriority.Bottom,
+        description: "模块基类，所有的模块都继承这个模块"
+    }
+    /** 模块是否加载完成 */
+    public Loaded: boolean = false;
+
+    /**
+     * 在模块加载完成后调用
+     */
+    protected letSuccessfullyLoad(): void {
+        this.Loaded = true;
+    }
+
+    /**
+     * 初始化函数
+     */
+    public abstract Init(info: ModuleInfo): void
+    /**
+     * 加载函数
+     */
+    public abstract Load(): void
+
+    /**
+     * 运行模块
+     */
+    public abstract Run(): void
+
+    /**
+     * 卸载模块
+     */
+    public abstract Unload(): void
+}
