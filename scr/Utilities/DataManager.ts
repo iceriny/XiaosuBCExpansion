@@ -2,7 +2,7 @@ import { Data } from "../Base/Data"
 
 
 export class DataManager {
-    static data: Data<IData>;
+    private static data: Data<IData>;
 
     Init() {
         DataManager.data = new Data({
@@ -15,6 +15,7 @@ export class DataManager {
         window.XSBE_Data = DataManager.data
     }
 
-    getData = (): Data<IData> => DataManager.data;
-
+    get data() {
+        return DataManager.data
+    }
 }

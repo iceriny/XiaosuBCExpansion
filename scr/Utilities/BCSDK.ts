@@ -19,4 +19,8 @@ export function patchFunction(functionName: string, patches: Record<string, stri
     bcModSDK.patchFunction(functionName, patches);
 }
 
+export function removePatches(functionName: string){
+    bcModSDK.removePatches(functionName);
+}
+
 //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ----SDK----  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^    //
