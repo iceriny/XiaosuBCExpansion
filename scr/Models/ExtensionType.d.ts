@@ -3,19 +3,19 @@ interface Window {
 }
 
 interface PlayerCharacter {
-    XSBE: {
+    XSBE?: {
         [key: string]: unknown;
-        Settings: {
+        Settings?: {
             [key: string]: unknown;
         };
-        OnlineData: {
+        OnlineData?: {
             [key: string]: unknown
         }
     }
 }
 
 interface CharacterOnlineSharedSettings {
-    XSBE: {
+    XSBE?: {
         [key: string] :unknown
     }
 }

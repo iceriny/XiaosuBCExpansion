@@ -4,5 +4,6 @@
         "XSBCExpansion",
         "XSBE",
         "XSBE_VERSION"
-    ]
+    ],
+    "java.dependency.syncWithFolderExplorer": true
 }

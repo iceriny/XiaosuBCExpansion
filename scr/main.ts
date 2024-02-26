@@ -1,6 +1,7 @@
 import { hookFunction } from "./Utilities/BCSDK";
 import { conDebug, DebugMSGType } from "./Utilities/Utilities";
 import { HookManager } from "./Utilities/HookManager";
+import { DataManager } from "./Utilities/DataManager";
 
 function initWait() {
     conDebug({
@@ -10,7 +11,7 @@ function initWait() {
     });
     if (CurrentScreen == null || CurrentScreen === 'Login') {
         // 加载模组
-        hookFunction('LoginResponse', 10, (args, next) => {
+        hookFunction('LoginResponse', -100, (args, next) => {
             const result = next(args);
             conDebug({
                 name: `Init! Login Response caught`,
@@ -39,6 +40,18 @@ function init() {
             args: args
         }
     })
+
+    // 模块加载
+
+    // 数据处理
+    DataManager.Init()
+    conDebug({
+        name: "Data Init Complete",
+        type: DebugMSGType.Workflow_Log,
+        content: DataManager.data
+    });
+    
+
 }
 
 

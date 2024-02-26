@@ -46,3 +46,4 @@ export function conDebug(msg: XSDebugMSG | string, color: string | null = null, 
         console.debug("%c小酥的模组信息: ", 'background-color: rgba(191, 154, 175, 1); font-weight: bold;', result);
     }
 }
+

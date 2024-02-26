@@ -7,7 +7,7 @@ export interface ModuleInfo {
     description: string;
 }
 
-type moduleName = 'base'
+export type moduleName = 'base'
 
 export enum ModulePriority {
     Bottom = -100,
