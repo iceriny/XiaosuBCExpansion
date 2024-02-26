@@ -1,10 +1,11 @@
 /** @模块加载器 */
 
 import { BaseModule } from "../../Base/BaseModule";
+import * as MInfo from "../../Models/ModuleInfo";
 
 export class ModulesLoader {
     /** @模块集合 用于加载模块 */
-    private static modules = new Map<string, BaseModule>();
+    private static modules = new Map<MInfo.moduleName, BaseModule>();
     /** @模块列表 用于注册模块 并排序*/
     private static modulesList: BaseModule[] = [];
 
@@ -30,4 +31,9 @@ export class ModulesLoader {
         module
         throw new Error("Method not implemented.");
     }
+
+    private static o:{[key in MInfo.moduleName]: () => BaseModule } = {
+        base: () => {throw new Error("BaseModule 不应该被创建")},
+    }
+    
 }
