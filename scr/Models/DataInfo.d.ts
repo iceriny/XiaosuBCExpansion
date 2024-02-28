@@ -42,6 +42,7 @@ interface IData {
     timestamp: number;
     enabled: boolean;
     hasWombTattoos: boolean;
+    aftertaste:number;
     [key: string]: unknown
 }
 

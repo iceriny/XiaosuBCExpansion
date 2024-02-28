@@ -13,9 +13,7 @@ interface PlayerCharacter {
         }
     }
 }
-
+type XSBE_SharedSettings = {[key: string] :unknown}
 interface CharacterOnlineSharedSettings {
-    XSBE?: {
-        [key: string] :unknown
-    }
+    XSBE?: XSBE_SharedSettings
 }

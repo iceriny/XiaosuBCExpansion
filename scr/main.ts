@@ -2,6 +2,8 @@ import { hookFunction } from "./Utilities/BCSDK";
 import { conDebug, DebugMSGType } from "./Utilities/Utilities";
 import { HookManager } from "./Utilities/HookManager";
 import { DataManager } from "./Utilities/DataManager";
+import { TimerProcessInjector } from "./Utilities/TimerProcessInjector";
+import { ModulesLoader } from "./Utilities/Modules/ModulesLoader";
 
 function initWait() {
     conDebug({
@@ -28,14 +30,16 @@ function initWait() {
 }
 
 function init() {
-    HookManager.setHook('ChatRoomSync','Test HookManager', -1, (args) => {
-        const a = args[0] as ServerChatRoomSyncMessage;
+    if (ModulesLoader.successfulLoaded) return;
+
+    HookManager.setHook('ChatRoomSync', 'Test HookManager', -1, (args) => {
+        const roomData = args[0] as ServerChatRoomSyncMessage;
         conDebug({
             name: `HookManager Test`,
-            content: a,
+            content: roomData,
             type: DebugMSGType.Workflow_Log
         });
-        HookManager.removeHook('ChatRoomSync','Test HookManager');
+        HookManager.removeHook('ChatRoomSync', 'Test HookManager');
         return {
             args: args
         }
@@ -50,7 +54,15 @@ function init() {
         type: DebugMSGType.Workflow_Log,
         content: DataManager.data
     });
-    
+    TimerProcessInjector.Init();
+
+    ModulesLoader.registerModule();
+    ModulesLoader.initModules();
+    ModulesLoader.loadModules();
+    ModulesLoader.runModules();
+
+    TimerProcessInjector.Load();
+    TimerProcessInjector.Run();
 
 }
 

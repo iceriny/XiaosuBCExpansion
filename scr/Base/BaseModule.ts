@@ -13,6 +13,10 @@ export abstract class BaseModule {
     /** 模块是否加载完成 */
     public Loaded: boolean = false;
 
+    constructor(info: ModuleInfo) {
+        this.Info = info;
+    }
+
     /**
      * 在模块加载完成后调用
      */
@@ -23,7 +27,7 @@ export abstract class BaseModule {
     /**
      * 初始化函数
      */
-    public abstract Init(info: ModuleInfo): void
+    public abstract Init(): void
     /**
      * 加载函数
      */

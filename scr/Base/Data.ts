@@ -1,5 +1,5 @@
 /** @Mod的数据类 */
-type dataType = 'online' | 'setting' | 'local'
+export type dataType = 'online' | 'setting' | 'local'
 
 export const PlayerStorage = () => Player?.XSBE;
 export const PlayerOnlineSharedSettingsStorage = () => Player.OnlineSharedSettings?.XSBE;
@@ -114,21 +114,21 @@ export class Data<T extends IData> {
      * @param value 设置数据的值
      * @param upload 是否同步到服务器
      */
-    set<K extends keyof T>(key: K, value: T[K],dataType?: dataType[], upload: boolean = false) {
+    set<K extends keyof T>(key: K, value: T[K], dataType?: dataType, upload: boolean = false) {
         this.data[key] = value;
-        if (dataType){
-            for (const t of dataType){
-                switch (t){
-                    case 'online':
-                        this.onlineKeys.add(key);
-                        break;
-                    case 'setting':
-                        this.settingKeys.add(key);
-                        break;
-                    case 'local':
-                        this.localKeys.add(key);
-                        break;
-                }
+        if (dataType) {
+            switch (dataType) {
+                case 'online':
+                    this.onlineKeys.add(key);
+                    this.localKeys.add(key);
+                    break;
+                case 'setting':
+                    this.settingKeys.add(key);
+                    this.localKeys.add(key);
+                    break;
+                case 'local':
+                    this.localKeys.add(key);
+                    break;
             }
         }
         this.dataSetHandle(key, value, upload);

@@ -7,7 +7,7 @@ export interface ModuleInfo {
     description: string;
 }
 
-export type moduleName = 'base'
+export type moduleName = 'base' | 'WombTattoosModule' | 'ArousalModule'
 
 export enum ModulePriority {
     Bottom = -100,

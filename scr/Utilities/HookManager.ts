@@ -1,9 +1,12 @@
 /** @hook函数工具 */
 // import { ModulePriority } from "../Models/ModuleInfo";
-import { hookFunction, removePatches } from "./BCSDK";
+import { hookFunction, patchFunction, removePatches } from "./BCSDK";
 import * as Utils from "../Utilities/Utilities";
 
-
+/**
+ * 完整的钩子项 
+ */
+type CompleteHookItem = [top: HookItem<HookItemContent>, bottom: HookItem<HookItemContent>, topHookSet: Set<string>]
 /**
  * Hook管理器
  */
@@ -26,12 +29,12 @@ export class HookManager {
      * @param priority 钩子优先级
      * @param code 钩子函数中运行的代码
      */
-    static setHook(functionName: string, name: string, priority: number, code: (args: unknown[]) => codeResult) {
+    static setHook(functionName: string, name: string, priority: number, code: (args: unknown[]) => codeResult | void) {
         // 获取函数对应的钩子项
         const hookItem = HookManager._hookMap.get(functionName);
         if (hookItem) {
             // 如果钩子项存在，则设置钩子函数
-            if (priority > 0) hookItem[0].add(name, { priority, code });
+            if (priority >= 0) hookItem[0].add(name, { priority, code });
             else hookItem[1].add(name, { priority, code });
         } else {
             // 如果钩子项不存在，则创建新的钩子项，并设置钩子函数
@@ -67,7 +70,7 @@ export class HookManager {
             if (hookItem[0].size === 0 && hookItem[1].size === 0) {
                 // 如果HookItem为空，则删除HookItem
                 HookManager._hookMap.delete(functionName);
-                removePatches(functionName);
+                // removePatches(functionName); 这是删除Patches的函数 这里用的不对
             }
         }
     }
@@ -86,52 +89,60 @@ export class HookManager {
      * @param functionName 需要hook的函数名
      * @param completeHookItem 添加的函数内容
      */
-    private static addHook(functionName: string, completeHookItem: CompleteHookItem) {
+    private static addHook(functionName: string, completeHookItem: CompleteHookItem): () => void {
         // 调用hookFunction函数，传入需要hook的函数名和参数
-        hookFunction(functionName, 0, (args, next) => {
+        return hookFunction(functionName, 0, (args, next) => {
             // 遍历顶部钩子函数
-            const topItemResult: codeResult[] = completeHookItem[0].forEach((item, name): codeResult => {
+            const topItemResult: codeResult[] = completeHookItem[0].forEach((item, name): codeResult | void => {
                 Utils.conDebug(`${functionName}: name: ${name}`);
                 // 运行钩子函数
                 const itemResult = item.code(args);
-                // 更新参数
-                args = itemResult.args;
-                return itemResult;
+                if (itemResult) {
+                    // 更新参数
+                    args = itemResult.args;
+                    return itemResult;
+                }
             });
             // 取出最后一个函数的结果 如果存在则返回结果
-            const topLastResult = topItemResult[topItemResult.length - 1];
+            const topLastResult = topItemResult.length === 0 ? null : topItemResult[topItemResult.length - 1].result;
             if (topLastResult) return topLastResult;
 
             // 调用下一个函数并返回结果
             const result = next(args);
 
             // 遍历完成钩子的参数
-            const bottomItemResult: codeResult[] = completeHookItem[1].forEach((item, name): codeResult => {
+            const bottomItemResult: codeResult[] = completeHookItem[1].forEach((item, name): codeResult | void => {
                 Utils.conDebug(`${functionName}: name: ${name}`);
                 // 运行钩子函数
                 const itemResult = item.code(args);
-                // 更新参数
-                args = itemResult.args;
-                return itemResult;
+                if (itemResult) {
+                    // 更新参数
+                    args = itemResult.args;
+                    return itemResult;
+                }
             });
             // 取出最后一个函数的结果 如果存在则返回结果
-            const bottomLastResult = bottomItemResult[bottomItemResult.length - 1];
+            const bottomLastResult = bottomItemResult.length === 0 ? null : bottomItemResult[bottomItemResult.length - 1].result;
             if (bottomLastResult) return bottomLastResult;
             // 否则返回原函数的结果
             return result;
         });
     }
+
+    public static patchAdd(functionName: string, patches: Record<string, string | null>) {
+        patchFunction(functionName, patches);
+    }
+    public static patchRemove(functionName: string) {
+        removePatches(functionName);
+    }
 }
-/**
- * 完整的钩子项
- */
-type CompleteHookItem = [top: HookItem<HookItemContent>, bottom: HookItem<HookItemContent>, topHookSet: Set<string>]
+
 /**
  * 钩子项内容
  */
 interface HookItemContent {
     priority: number;
-    code: (args: unknown[]) => codeResult;
+    code: (args: unknown[]) => codeResult | void;
 }
 
 type codeResult = {
@@ -187,13 +198,15 @@ class HookItem<T extends HookItemContent> implements Iterable<T> {
     }
 
     // 遍历 HookItem
-    forEach(callback: (value: T, name: string) => codeResult): codeResult[] {
+    forEach(callback: (value: T, name: string) => codeResult | void): codeResult[] {
         const resultList: codeResult[] = [];
         // 遍历 itemSequence，调用回调函数
         for (const key of this.itemSequence) {
             const callbackResult = callback(this.itemMap[key], key)
-            resultList.push(callbackResult);
-            if (callbackResult.result) return resultList;
+            if (callbackResult) {
+                resultList.push(callbackResult);
+                if (callbackResult.result) return resultList;
+            }
         }
         return resultList;
     }
