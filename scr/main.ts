@@ -1,9 +1,10 @@
 import { hookFunction } from "./Utilities/BCSDK";
 import { conDebug, DebugMSGType } from "./Utilities/Utilities";
-import { HookManager } from "./Utilities/HookManager";
 import { DataManager } from "./Utilities/DataManager";
 import { TimerProcessInjector } from "./Utilities/TimerProcessInjector";
 import { ModulesLoader } from "./Utilities/Modules/ModulesLoader";
+import { AssetManager } from "./Utilities/AssetManager";
+// import { HookManager } from "./Utilities/HookManager";
 
 function initWait() {
     conDebug({
@@ -32,20 +33,17 @@ function initWait() {
 function init() {
     if (ModulesLoader.successfulLoaded) return;
 
-    HookManager.setHook('ChatRoomSync', 'Test HookManager', -1, (args) => {
-        const roomData = args[0] as ServerChatRoomSyncMessage;
-        conDebug({
-            name: `HookManager Test`,
-            content: roomData,
-            type: DebugMSGType.Workflow_Log
-        });
-        HookManager.removeHook('ChatRoomSync', 'Test HookManager');
-        return {
-            args: args
-        }
-    })
+    AssetManager.cacheAssets();
+    
+    // HookManager.setHook('ChatRoomSync', 'Test HookManager', -1, (args) => {
+    //     AssetManager.getAssets<HTMLAudioElement>('sun','sound')!.play();
 
-    // 模块加载
+    //     HookManager.removeHook('ChatRoomSync', 'Test HookManager');
+    //     return {
+    //         args: args
+    //     }
+    // })
+
 
     // 数据处理
     DataManager.Init()

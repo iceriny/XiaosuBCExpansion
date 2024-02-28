@@ -147,8 +147,9 @@ export class Data<T extends IData> {
             localStorage.setItem(this.getLocalKeyFromKey(key), JSON.stringify(value));
             if (this.settingKeys.has(key)) {
                 Player.XSBE!.Settings![key as string] = value;
-            } else if (upload) {
-                if (Player.OnlineSharedSettings && this.onlineKeys.has(key)) Player.OnlineSharedSettings!.XSBE![key as string] = value;
+            } else if (upload && this.onlineKeys.has(key)) {
+                if (Player.OnlineSharedSettings) Player.OnlineSharedSettings!.XSBE![key as string] = value;
+                Player.XSBE![key as string] = value;
                 this.updateExtensionSettings();
             } else {
                 // set on Player

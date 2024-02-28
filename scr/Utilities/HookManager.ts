@@ -1,12 +1,12 @@
 /** @hook函数工具 */
 // import { ModulePriority } from "../Models/ModuleInfo";
 import { hookFunction, patchFunction, removePatches } from "./BCSDK";
-import * as Utils from "../Utilities/Utilities";
+// import * as Utils from "../Utilities/Utilities";
 
 /**
  * 完整的钩子项 
  */
-type CompleteHookItem = [top: HookItem<HookItemContent>, bottom: HookItem<HookItemContent>, topHookSet: Set<string>]
+type CompleteHookItem = [top: HookItem<HookItemContent>, bottom: HookItem<HookItemContent>, topHookSet: Set<string>, removeCallback?: () => void]
 /**
  * Hook管理器
  */
@@ -69,8 +69,9 @@ export class HookManager {
 
             if (hookItem[0].size === 0 && hookItem[1].size === 0) {
                 // 如果HookItem为空，则删除HookItem
-                HookManager._hookMap.delete(functionName);
-                // removePatches(functionName); 这是删除Patches的函数 这里用的不对
+                this._hookMap.get(functionName)?.[3]?.()
+                this._hookMap.delete(functionName);
+
             }
         }
     }
@@ -89,12 +90,12 @@ export class HookManager {
      * @param functionName 需要hook的函数名
      * @param completeHookItem 添加的函数内容
      */
-    private static addHook(functionName: string, completeHookItem: CompleteHookItem): () => void {
+    private static addHook(functionName: string, completeHookItem: CompleteHookItem) {
         // 调用hookFunction函数，传入需要hook的函数名和参数
-        return hookFunction(functionName, 0, (args, next) => {
+        const removeCallback = hookFunction(functionName, 100, (args, next) => {
             // 遍历顶部钩子函数
-            const topItemResult: codeResult[] = completeHookItem[0].forEach((item, name): codeResult | void => {
-                Utils.conDebug(`${functionName}: name: ${name}`);
+            const topItemResult: codeResult[] = completeHookItem[0].forEach((item): codeResult | void => {
+                // Utils.conDebug(`${functionName}: name: ${name}`);
                 // 运行钩子函数
                 const itemResult = item.code(args);
                 if (itemResult) {
@@ -111,8 +112,7 @@ export class HookManager {
             const result = next(args);
 
             // 遍历完成钩子的参数
-            const bottomItemResult: codeResult[] = completeHookItem[1].forEach((item, name): codeResult | void => {
-                Utils.conDebug(`${functionName}: name: ${name}`);
+            const bottomItemResult: codeResult[] = completeHookItem[1].forEach((item): codeResult | void => {
                 // 运行钩子函数
                 const itemResult = item.code(args);
                 if (itemResult) {
@@ -127,6 +127,7 @@ export class HookManager {
             // 否则返回原函数的结果
             return result;
         });
+        completeHookItem[3] = removeCallback;
     }
 
     public static patchAdd(functionName: string, patches: Record<string, string | null>) {

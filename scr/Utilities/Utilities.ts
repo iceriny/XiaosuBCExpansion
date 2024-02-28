@@ -47,3 +47,7 @@ export function conDebug(msg: XSDebugMSG | string, color: string | null = null, 
     }
 }
 
+export function SkillSetNegativeModifier(name: SkillType, value: number, duration: number) {
+    const bondage = SkillGetLevelReal(Player, name);
+    SkillSetModifier(Player, name, bondage + SkillGetModifier(Player, name) - value <= 0 ? -bondage : -value, duration);
+}

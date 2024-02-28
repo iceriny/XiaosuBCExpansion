@@ -1,9 +1,13 @@
 import { BaseModule } from "../Base/BaseModule";
+//import { AssetManager } from "../Utilities/AssetManager";
 import { DataManager } from "../Utilities/DataManager";
 import { HookManager } from "../Utilities/HookManager";
 import { MSGManager } from "../Utilities/MessageManager";
 import { TimerProcessInjector } from "../Utilities/TimerProcessInjector";
+import { SkillSetNegativeModifier } from "../Utilities/Utilities";
 
+
+type AftertasteEffect = 'relax' | 'weakness' | 'twitch' | 'trance' | 'absentminded'
 export class ArousalModule extends BaseModule {
     private _aftertaste: number = 0;
     /** 对于忍耐高潮时的反应描述 */
@@ -48,17 +52,40 @@ export class ArousalModule extends BaseModule {
         return this._aftertaste;
     }
 
+    /**
+     * 处理本模块的Hook函数
+     */
     private HookList(): void {
+        // 处理高潮余韵等级的增加
         HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 0, () => {
-            // 处理高潮余韵等级的增加
-            const n = Math.floor(ActivityOrgasmGameResistCount / 2)
-            const addedNumber = n == 0 ? 1 : n;
+            const addedNumber = ActivityOrgasmGameResistCount === 0 ? 1 : ActivityOrgasmGameResistCount;
             this.Aftertaste = this._aftertaste + addedNumber;
-            if (this._aftertaste > 100) this.Aftertaste = 100;
+            Player.PoseMapping/////////////
+            if (this._aftertaste > 120) this.Aftertaste = 120;
+            this.AftertasteEffectSetHandler(true);
+        })
+
+        HookManager.setHook('Player.GetSlowLevel', 'aftertasteWeaknessEffect', 0, (args) => {
+            if (Player.RestrictionSettings?.SlowImmunity)
+                return { args: args, result: 0 };
+            else if (this._aftertasteEffectSet.has('weakness')) {
+                let slowLevel = 1;
+                if (this._aftertaste > 55) slowLevel = 2;
+                if (this._aftertaste > 60) slowLevel = 3;
+                if (this._aftertaste > 70) slowLevel = 4;
+
+                if (Player.HasEffect("Slow")) slowLevel++;
+                if (Player.PoseMapping.BodyFull === "AllFours") slowLevel += 2;
+                else if (Player.PoseMapping.BodyLower === "Kneel") slowLevel += 1;
+                return { args: args, result: slowLevel }
+            }
+            return;
         })
     }
 
-
+    /**
+     * 处理本模块的TimerProcess
+     */
     private TimerProcess(): void {
         // 处理边缘增加抵抗高潮难度
         TimerProcessInjector.add(101, 45000, () => {
@@ -68,34 +95,79 @@ export class ArousalModule extends BaseModule {
                 if (Player.ArousalSettings!.Progress >= 93) {
                     ActivityOrgasmGameResistCount++;
                     DataManager.data.set('resistCount', ActivityOrgasmGameResistCount, 'online', true)
-                } else {
-                    if (ActivityOrgasmGameResistCount >= 1) ActivityOrgasmGameResistCount--;
+                } else if (Player.ArousalSettings!.Progress < 60 && ActivityOrgasmGameResistCount >= 1) {
+                    ActivityOrgasmGameResistCount--;
                 }
             },
             name: "EdgeTimer"
         });
 
+        // 处理高潮余韵的恢复 每15秒回复 1
+        TimerProcessInjector.add(100, 15000, () => {
+            return this._aftertaste > 0;
+        }, {
+            code: () => {
+                this.AftertasteFallBack();
+                this.AftertasteEffectSetHandler(true);
+            },
+            name: "AftertasteFallBack"
+        });
+
+        // 处理高潮余韵的无力效果
+        TimerProcessInjector.add(99, 0, () => {
+            return this._aftertaste >= 20;
+        }, {
+            code: () => {
+                if (this._aftertasteEffectSet.has('relax') && SkillGetModifier(Player, 'Bondage') >= 0) {
+                    SkillSetNegativeModifier('Bondage', -5, 5000);
+                    SkillSetNegativeModifier('SelfBondage', -5, 5000);
+                    SkillSetNegativeModifier('LockPicking', -3, 5000);
+                    SkillSetNegativeModifier('Evasion', -8, 5000);
+                    SkillSetNegativeModifier('Willpower', -3, 5000);
+                    SkillSetNegativeModifier('Infiltration', -7, 5000);
+                    SkillSetNegativeModifier('Dressage', -7, 5000);
+                }
+            },
+            name: "AftertasteEffectHandle"
+        });
+
+        // 处理高潮余韵的抽搐效果
+        TimerProcessInjector.add(98, 3000, () => {
+            return this._aftertaste >= 70;
+        }, {
+            code: () => {
+                if (this._aftertasteEffectSet.has('twitch')) {
+                    //AssetManager.getAssets<HTMLAudioElement>('sun','sound')!.play(); ///////////////////////////////////////////
+                }
+            },
+            name: "AftertasteEffectHandle"
+        });
+
+        // 处理是否需要禁用输入
         TimerProcessInjector.add(-1, 200, () => {
             return CurrentScreen == "ChatRoom" && Player.MemberNumber !== undefined;
         }, {
             code: () => {
-                const inputElement: HTMLTextAreaElement | null = document.getElementById("InputChat") as HTMLTextAreaElement;
                 const orgasmStage = Player.ArousalSettings?.OrgasmStage;
-                if (orgasmStage == 2 || orgasmStage == 1) {
-                    this.needChangeStyle = true;
-                    this.setFormElementsForAbsentState(inputElement, true); // 处理输入框的禁用状态 可以增加条件 让不处于高潮时不进行操作
-                    if (Player.ArousalSettings?.OrgasmStage == 1) {
-                        this.needSendEnduringMessage = true;
+                if (orgasmStage == 1) {
+                    this.needSendEnduringMessage = true;
+                    if (!this.inputDisabled) {
+                        this.DisableInput(true);
                     }
-                } else {
-                    this.needChangeStyle = true;
-                    this.setFormElementsForAbsentState(inputElement, false);
+                }
+                else if (orgasmStage == 0) {
+                    this.needSendEnduringMessage = false;
+                    if (this.inputDisabled) {
+                        this.DisableInput(false);
+                    }
+                } else if (orgasmStage == 2) {
                     this.needSendEnduringMessage = false;
                 }
             },
             name: "DisableInput"
         });
 
+        // 处理是否需要发送忍耐的描述
         TimerProcessInjector.add(-2, 2500, () => {
             return this.needSendEnduringMessage;
         }, {
@@ -105,33 +177,8 @@ export class ArousalModule extends BaseModule {
             name: 'SendEnduringMessage'
         });
 
-
-        // 15秒后恢复 // 处理高潮余韵的恢复 每15秒回复 1
-        TimerProcessInjector.add(100, 15000, () => {
-            return this._aftertaste > 0;
-        }, {
-            code: () => {
-                this.AftertasteFallBack();
-            },
-            name: "AftertasteFallBack"
-        });
-
-
-
-        // // 处理高潮余韵的效果列表
-        // TimerProcessInjector.add(99, 0, () => {
-        //     return this._aftertaste > 0;
-        // }, {
-        //     code: () => {
-        //         if (this._aftertaste > 0) {
-        //             HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 0, () => {
-        //                 this.Aftertaste = this._aftertaste - 1;
-        //             })
-        //         } 
-        //     },
-        //     name: "AftertasteAddEffect"
-        // })
     }
+
 
     /**
      * 补丁列表处理
@@ -141,11 +188,11 @@ export class ArousalModule extends BaseModule {
         HookManager.patchAdd("ActivityOrgasmStart",
             {// XSA补丁处理~ 基础高潮时间为 4~7秒, 每边缘45秒钟增加随机的 300ms ~ 1300ms 的高潮时间。 最多增加 20000ms，也就是最长高潮时间为 27 秒
                 "C.ArousalSettings.OrgasmTimer = CurrentTime + (Math.random() * 10000) + 5000;":
-                    `if (!Player.XSBE) {
-                C.ArousalSettings.OrgasmTimer = CurrentTime + (Math.random() * 10000) + 5000;
-            } else if (C.IsPlayer()) {
+                    `if (Player.XSBE && C.IsPlayer()) {
                 const addedTime = (Math.random() + 0.3) * 1000 * ActivityOrgasmGameResistCount;
                 C.ArousalSettings.OrgasmTimer = CurrentTime + (addedTime > 20000 ? 20000 : addedTime) + 4000 + (3000 * Math.random());
+            } else {
+                C.ArousalSettings.OrgasmTimer = CurrentTime + (Math.random() * 10000) + 5000;
             }`,
                 // 高潮时将抵抗难度减半而非变为0
                 "ActivityOrgasmGameResistCount = 0;":
@@ -153,6 +200,10 @@ export class ArousalModule extends BaseModule {
             });
     }
 
+
+    /**
+     * 处理余韵等级的回落
+     */
     private AftertasteFallBack(): void {
         const n = 30 - ActivityOrgasmGameResistCount
         const fallBackNumber = n <= 0 ? 1 : n;
@@ -160,40 +211,67 @@ export class ArousalModule extends BaseModule {
         if (this._aftertaste < 0) this.Aftertaste = 0;
     }
 
+    private _aftertasteEffectSet: Set<AftertasteEffect> = new Set();
+    private AftertasteEffectSetHandler(pushToServer: boolean): void {
+        const newAftertasteEffectSet: Set<AftertasteEffect> = new Set()
+        if (this._aftertaste > 20) {
+            newAftertasteEffectSet.add("relax"); //放松
+        }
+        if (this._aftertaste > 50) {
+            newAftertasteEffectSet.add("weakness"); // 虚弱
+        }
+        if (this._aftertaste > 70) {
+            newAftertasteEffectSet.add("twitch"); // 抽搐
+        }
+        if (this._aftertaste > 90) {
+            newAftertasteEffectSet.add("trance"); // 恍惚
+        }
+        if (this._aftertaste > 100) {
+            newAftertasteEffectSet.add("absentminded"); // 失能
+        }
+        DataManager.data.set('aftertasteEffect', newAftertasteEffectSet, 'online', pushToServer);
+        this._aftertasteEffectSet = newAftertasteEffectSet;
+    }
+
+
+
+
+
     /** 默认的输入框样式 */
     inputDefaultStyle: { backgroundColor: string, borderColor: string, borderRadius: string } | undefined = undefined;
-    needChangeStyle: boolean = false;
+    inputDisabled: boolean = false;
     /**
      * 获取{@link HTMLTextAreaElement}的默认样式，根据{@param isAbsent}决定是否禁用或取消禁用
-     * @param formElements 表单元素
      * @param isAbsent 是否为失能状态
      */
-    private setFormElementsForAbsentState(formElements: HTMLTextAreaElement | null, isAbsent: boolean): void {
-        if (!formElements || !this.needChangeStyle) return;
+    private DisableInput(isAbsent: boolean): void {
+        const inputElement: HTMLTextAreaElement | null = document.getElementById("InputChat") as HTMLTextAreaElement;
+        if (!inputElement) return;
         if (isAbsent) {
-            if (!formElements.readOnly) {
+            if (!inputElement.readOnly) {
                 if (!this.inputDefaultStyle) {
                     this.inputDefaultStyle = {
-                        backgroundColor: formElements.style.backgroundColor,
-                        borderColor: formElements.style.borderColor,
-                        borderRadius: formElements.style.borderRadius
+                        backgroundColor: inputElement.style.backgroundColor,
+                        borderColor: inputElement.style.borderColor,
+                        borderRadius: inputElement.style.borderRadius
                     };
                 }
-                formElements.readOnly = true;
-                formElements.style.backgroundColor = "#8d6f83";
-                formElements.style.borderColor = "#ea44a9";
-                formElements.style.borderRadius = "5px";
+                inputElement.readOnly = true;
+                this.inputDisabled = true;
+                inputElement.style.backgroundColor = "#8d6f83";
+                inputElement.style.borderColor = "#ea44a9";
+                inputElement.style.borderRadius = "5px";
             }
         } else {
-            if (formElements.readOnly) {
-                formElements.readOnly = false;
+            if (inputElement.readOnly) {
+                inputElement.readOnly = false;
+                this.inputDisabled = false;
                 if (this.inputDefaultStyle) {
-                    formElements.style.backgroundColor = this.inputDefaultStyle.backgroundColor;
-                    formElements.style.borderColor = this.inputDefaultStyle.borderColor;
-                    formElements.style.borderRadius = this.inputDefaultStyle.borderRadius;
+                    inputElement.style.backgroundColor = this.inputDefaultStyle.backgroundColor;
+                    inputElement.style.borderColor = this.inputDefaultStyle.borderColor;
+                    inputElement.style.borderRadius = this.inputDefaultStyle.borderRadius;
                 }
             }
         }
-        this.needChangeStyle = false;
     }
 }
