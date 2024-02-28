@@ -17,6 +17,8 @@ export class ArousalModule extends BaseModule {
         `{source}浑身颤抖的抵抗高潮的逼近.`
     ];
 
+    private needSendEnduringMessage = false;
+
     /** 获取忍耐高潮时的反应描述 */
     get getEndureDesc(): string {
         return this.descriptionOfEnduranceActivities[Math.floor(Math.random() * this.descriptionOfEnduranceActivities.length)];
@@ -80,15 +82,27 @@ export class ArousalModule extends BaseModule {
                 const inputElement: HTMLTextAreaElement | null = document.getElementById("InputChat") as HTMLTextAreaElement;
                 const orgasmStage = Player.ArousalSettings?.OrgasmStage;
                 if (orgasmStage == 2 || orgasmStage == 1) {
-                    this.setFormElementsForAbsentState(inputElement, true);
+                    this.needChangeStyle = true;
+                    this.setFormElementsForAbsentState(inputElement, true); // 处理输入框的禁用状态 可以增加条件 让不处于高潮时不进行操作
                     if (Player.ArousalSettings?.OrgasmStage == 1) {
-                        if (Math.random() < 0.3) MSGManager.SendActivity(this.getEndureDesc, Player.MemberNumber!);
+                        this.needSendEnduringMessage = true;
                     }
                 } else {
+                    this.needChangeStyle = true;
                     this.setFormElementsForAbsentState(inputElement, false);
+                    this.needSendEnduringMessage = false;
                 }
             },
             name: "DisableInput"
+        });
+
+        TimerProcessInjector.add(-2, 2500, () => {
+            return this.needSendEnduringMessage;
+        }, {
+            code: () => {
+                MSGManager.SendActivity(this.getEndureDesc, Player.MemberNumber!);
+            },
+            name: 'SendEnduringMessage'
         });
 
 
@@ -148,13 +162,14 @@ export class ArousalModule extends BaseModule {
 
     /** 默认的输入框样式 */
     inputDefaultStyle: { backgroundColor: string, borderColor: string, borderRadius: string } | undefined = undefined;
+    needChangeStyle: boolean = false;
     /**
      * 获取{@link HTMLTextAreaElement}的默认样式，根据{@param isAbsent}决定是否禁用或取消禁用
      * @param formElements 表单元素
      * @param isAbsent 是否为失能状态
      */
     private setFormElementsForAbsentState(formElements: HTMLTextAreaElement | null, isAbsent: boolean): void {
-        if (!formElements) return;
+        if (!formElements || !this.needChangeStyle) return;
         if (isAbsent) {
             if (!formElements.readOnly) {
                 if (!this.inputDefaultStyle) {
@@ -179,5 +194,6 @@ export class ArousalModule extends BaseModule {
                 }
             }
         }
+        this.needChangeStyle = false;
     }
 }
