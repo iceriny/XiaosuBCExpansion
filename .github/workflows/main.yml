@@ -28,8 +28,11 @@ jobs:
     - name: Copy css to dist
       run: cp scr/Static/css/* dist/
 
-    - name: Copy Assets to dist
-      run: cp -r scr/Static/Assets/* dist/Assets/
+    - name: Copy Assets Audio to dist
+      run: cp scr/Static/Assets/Audio/* dist/Assets/Audio/
+
+    - name: Copy Assets Img to dist
+      run: cp scr/Static/Assets/Img/* dist/Assets/Img/  
 
     - name: Deploy main to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3

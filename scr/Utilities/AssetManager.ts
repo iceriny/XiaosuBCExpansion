@@ -6,10 +6,16 @@ export class AssetManager {
         ['sound', new Map<string, HTMLAudioElement>()]
     ]);
 
-    private static readonly IOSrc = 'https://iceriny.github.io/XiaosuBCExpansion/'
+    private static readonly IOAssetSrc = 'https://iceriny.github.io/XiaosuBCExpansion/'
     private static readonly suffix = DEBUG ? 'dev' : 'main'
-    private static readonly imgSrcList = [['image', `${this.IOSrc}/${this.suffix}/img/image.jpg`], 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLXPRWWi8ymGpwCkgitCPziD8boYu8pa3e8g&usqp=CAU']
-    private static readonly soundSrcList = [['sound', `${this.IOSrc}/${this.suffix}/sound/sound.mp3`], ['sun', 'https://cdn.discordapp.com/attachments/1200701821811953775/1210247727313592360/Forest_Hymn.mp3?ex=65e9de07&is=65d76907&hm=e8f3c310489dcce029cd42e54c25a4b443a6e6768f6cbc3370ad53ab435d7fd2&']]
+    private static readonly imgSrcList: string[][] = [
+        ['logo', `${this.IOAssetSrc}/${this.suffix}/Assets/Img/logo.png`]
+    ]
+    private static readonly soundSrcList: string[][] = [
+        ['heartbeat', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/heartbeat.mp3`],
+        ['clock', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/clock.mp3`],
+        ['snapFingers', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/snapFingers.mp3`]
+    ]
 
 
     private static cacheImg(src: string, name: string): HTMLImageElement {
@@ -47,6 +53,20 @@ export class AssetManager {
             const assetMap = this.AssetMap.get('sound')!;
             const asset = assetMap.get(name) as T;
             return asset;
+        }
+    }
+
+    public static GatImg(name: string): HTMLImageElement {
+        const img = this.AssetMap.get('img')!.get(name) as HTMLImageElement;
+        return img;
+    }
+
+    public static PlayAudio(name: string, volume?: number): void {
+        const vol = volume != null ? volume : Player.AudioSettings?.Volume ?? 1;
+        if (vol > 0) {
+            const audio = this.AssetMap.get('sound')!.get(name) as HTMLAudioElement;
+            audio.volume = Math.min(vol, 1);
+            audio.play();
         }
     }
 }
