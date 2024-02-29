@@ -4,7 +4,7 @@ import { DataManager } from "./Utilities/DataManager";
 import { TimerProcessInjector } from "./Utilities/TimerProcessInjector";
 import { ModulesLoader } from "./Utilities/Modules/ModulesLoader";
 import { AssetManager } from "./Utilities/AssetManager";
-// import { HookManager } from "./Utilities/HookManager";
+import { HookManager } from "./Utilities/HookManager";
 
 function initWait() {
     conDebug({
@@ -35,14 +35,14 @@ function init() {
 
     AssetManager.cacheAssets();
     
-    // HookManager.setHook('ChatRoomSync', 'Test HookManager', -1, (args) => {
-    //     AssetManager.getAssets<HTMLAudioElement>('sun','sound')!.play();
+    HookManager.setHook('ChatRoomSync', 'Test HookManager', -1, (args) => {
+        AssetManager.PlayAudio('heartbeat')
 
-    //     HookManager.removeHook('ChatRoomSync', 'Test HookManager');
-    //     return {
-    //         args: args
-    //     }
-    // })
+        HookManager.removeHook('ChatRoomSync', 'Test HookManager');
+        return {
+            args: args
+        }
+    })
 
 
     // 数据处理

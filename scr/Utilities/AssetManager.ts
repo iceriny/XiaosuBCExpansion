@@ -6,7 +6,7 @@ export class AssetManager {
         ['sound', new Map<string, HTMLAudioElement>()]
     ]);
 
-    private static readonly IOAssetSrc = 'https://iceriny.github.io/XiaosuBCExpansion/'
+    private static readonly IOAssetSrc = 'https://iceriny.github.io/XiaosuBCExpansion'
     private static readonly suffix = DEBUG ? 'dev' : 'main'
     private static readonly imgSrcList: string[][] = [
         ['logo', `${this.IOAssetSrc}/${this.suffix}/Assets/Img/logo.png`]
