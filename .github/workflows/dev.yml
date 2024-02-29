@@ -29,10 +29,10 @@ jobs:
       run: cp scr/Static/css/* dist/dev/
 
     - name: Copy Assets Audio to dist
-      run: mkdir -p dist/Assets/Audio/ && cp -r scr/Static/Assets/Audio/* dist/dev/Assets/Audio/
+      run: mkdir -p dist/dev/Assets/Audio/ && cp -r scr/Static/Assets/Audio/* dist/dev/Assets/Audio/
 
     - name: Copy Assets Img to dist
-      run: mkdir -p dist/Assets/Img/ && cp -r scr/Static/Assets/Img/* dist/dev/Assets/Img/  
+      run: mkdir -p dist/dev/Assets/Img/ && cp -r scr/Static/Assets/Img/* dist/dev/Assets/Img/  
 
     - name: Deploy dev to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
