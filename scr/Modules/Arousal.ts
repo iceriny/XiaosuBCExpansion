@@ -158,7 +158,7 @@ export class ArousalModule extends BaseModule {
             name: "EdgeTimer"
         });
 
-        // 处理高潮余韵的恢复 每15秒回复 1
+        // 处理高潮余韵的恢复 每15秒回复一次与当前高潮抵抗等级有关
         TimerProcessInjector.add(100, 15000, () => {
             return this._aftertaste > 0;
         }, {
@@ -247,6 +247,7 @@ export class ArousalModule extends BaseModule {
 
     /**
      * 处理余韵等级的回落
+     * 高潮抵抗等级越大恢复越少 最多恢复20点 如果高潮抵抗等级超过20 则每次只恢复1点
      */
     private AftertasteFallBack(): void {
         const n = 20 - ActivityOrgasmGameResistCount
@@ -271,25 +272,12 @@ export class ArousalModule extends BaseModule {
         `${PH.s}的身体虽然还是软绵绵的，但大概可以正常走路了。`],
         twitch: [`连续深度的高潮冲击下，${PH.s}的身体不自觉的开始抽搐，再这么下去...`,
         `${PH.s}停止了抽搐，但还是很难支撑起自己的身体。`],
-        trance: [`高潮过于猛烈，${PH.s}的脑袋已经不清楚了。恍恍惚惚，意识断断续续。当然，也难以走动了。`,
+        trance: [`高潮过于猛烈，${PH.s}的脑袋已经不清楚了。恍恍惚惚，意识断断续续。想要移动的话..应该需要很大的意志力才能挪动吧。`,
         `${PH.s}的意识恢复了，但身体还是时不时的抽动一下。`],
         absentminded: [`强大的、连续的、不可抵挡的高潮冲击下，${PH.s}已经完全无法控制自己的身体。只能在无意识中抽搐着身体，发出细软的声音。这样的话...`,
         `${PH.s}虽然还是恍恍惚惚，意识算是渐渐恢复了，希望这段时间没有发生什么。`]
     }
-    // private afterEffectAction: { [name in AftertasteEffect]: (() => void)[] } = {
-    //     relax: [() => {
-    //         throw new Error("Not Implemented");
-    //     }],
-    //     weakness: [() => {
-    //         PoseSetActive(Player, 'LegsClosed');
-    //     }],
-    //     twitch: [() => {
-    //     }],
-    //     trance: [() => {
-    //     }],
-    //     absentminded: [() => {
-    //     }]
-    // }
+
     /**
      * 开关余韵效果
      * @param name 要开关的效果名字
@@ -300,8 +288,26 @@ export class ArousalModule extends BaseModule {
         if (switchState != value) {
             if (value) {
                 this._aftertasteEffectSet.add(name);
-                if (name === 'weakness' && Player.IsStanding()) PoseSetActive(Player, 'Kneel'); // 当虚弱时 自动跪下
-                if (name === 'twitch') AssetManager.PlayAudio('heartbeat'); // 当抽搐时 自动播放 心跳音效
+
+                if (name === 'relax' ) {
+                    AssetManager.PlayAudio('heartbeat', 0.5);
+                   if (Player.IsStanding()) PoseSetActive(Player, 'Kneel'); // 当放松时 自动跪下
+                }
+                if (name === 'weakness') {
+                    AssetManager.PlayAudio('heartbeat', 0.8);
+                }
+                if (name === 'twitch') {
+                    AssetManager.PlayAudio('heartbeat'); // 当抽搐时 自动播放 心跳音效
+                }
+                if (name === 'trance') {
+                    AssetManager.PlayAudio('heartbeat');
+                    AssetManager.PlayAudio('faultSound');
+                }
+                if (name === 'absentminded') {
+                    AssetManager.PlayAudio('heartbeat');
+                    AssetManager.PlayAudio('sleep')
+                }
+                
                 MSGManager.SendActivity(this.afterEffectDescribe[name][0], Player.MemberNumber!);
             } else {
                 this._aftertasteEffectSet.delete(name);
@@ -317,36 +323,18 @@ export class ArousalModule extends BaseModule {
      * @param pushToServer 是否同步到服务器
      */
     private AftertasteEffectSetHandler(pushToServer: boolean): void {
-        //放松
-        if (this._aftertaste > 20) {
-            this.setAftertasteEffectSwitch("relax", true);
-        } else if (this._aftertaste < 20) {
-            this.setAftertasteEffectSwitch("relax", false)
+        const effectThresholds: Array<{ threshold: number, effect: AftertasteEffect }> = [
+            { threshold: 20, effect: "relax" },
+            { threshold: 50, effect: "weakness" },
+            { threshold: 70, effect: "twitch" },
+            { threshold: 90, effect: "trance" },
+            { threshold: 100, effect: "absentminded" },
+        ];
+
+        for (const { threshold, effect } of effectThresholds) {
+            this.setAftertasteEffectSwitch(effect, this._aftertaste > threshold);
         }
-        // 虚弱
-        if (this._aftertaste > 50) {
-            this.setAftertasteEffectSwitch("weakness", true)
-        } else if (this._aftertaste < 50) {
-            this.setAftertasteEffectSwitch("weakness", false)
-        }
-        // 抽搐
-        if (this._aftertaste > 70) {
-            this.setAftertasteEffectSwitch("twitch", true)
-        } else if (this._aftertaste < 70) {
-            this.setAftertasteEffectSwitch("twitch", false)
-        }
-        // 恍惚
-        if (this._aftertaste > 90) {
-            this.setAftertasteEffectSwitch("trance", true)
-        } else if (this._aftertaste < 90) {
-            this.setAftertasteEffectSwitch("trance", false)
-        }
-        // 失能
-        if (this._aftertaste > 100) {
-            this.setAftertasteEffectSwitch("absentminded", true)
-        } else if (this._aftertaste < 100) {
-            this.setAftertasteEffectSwitch("absentminded", false)
-        }
+
         DataManager.data.set('aftertasteEffect', this._aftertasteEffectSet, 'online', pushToServer);
     }
 

@@ -15,7 +15,9 @@ export class AssetManager {
     private static readonly soundSrcList: string[][] = [
         ['heartbeat', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/heartbeat.mp3`],
         ['clock', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/clock.mp3`],
-        ['snapFingers', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/snapFingers.mp3`]
+        ['snapFingers', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/snapFingers.mp3`],
+        ['faultSound', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/faultSound.mp3`],
+        ['sleep', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/sleep.mp3`]
     ]
 
 
@@ -73,5 +75,8 @@ export class AssetManager {
                 conDebug(`声音播放失败: ${error}   Message: ${audio.error}`)
             }
         }
+    }
+    public static PlayerOriginalAudio(name: string, volume?: number): void {
+        AudioPlayInstantSound(`Audio/${name}.mp3`, volume)
     }
 }
