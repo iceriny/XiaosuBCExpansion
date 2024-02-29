@@ -1,3 +1,4 @@
+import { conDebug } from "./Utilities";
 
 
 export class AssetManager {
@@ -66,7 +67,11 @@ export class AssetManager {
         if (vol > 0) {
             const audio = this.AssetMap.get('sound')!.get(name) as HTMLAudioElement;
             audio.volume = Math.min(vol, 1);
-            audio.play();
+            try {
+                audio.play();
+            } catch (error) {
+                conDebug(`声音播放失败: ${error}   Message: ${audio.error}`)
+            }
         }
     }
 }
