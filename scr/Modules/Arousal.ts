@@ -1,5 +1,5 @@
 import { BaseModule } from "../Base/BaseModule";
-//import { AssetManager } from "../Utilities/AssetManager";
+import { AssetManager } from "../Utilities/AssetManager";
 import { DataManager } from "../Utilities/DataManager";
 import { HookManager } from "../Utilities/HookManager";
 import { MSGManager, PH } from "../Utilities/MessageManager";
@@ -137,7 +137,7 @@ export class ArousalModule extends BaseModule {
         }, {
             code: () => {
                 if (this._aftertasteEffectSet.has('twitch')) {
-                    //AssetManager.getAssets<HTMLAudioElement>('sun','sound')!.play(); ///////////////////////////////////////////
+                    AssetManager.PlayAudio('heartbeat')
                 }
             },
             name: "AftertasteEffectHandle"
