@@ -29,7 +29,7 @@ jobs:
       run: cp scr/Static/css/* dist/dev/
 
     - name: Copy Assets to dist
-      run: cp -r scr/Static/assets/* dist/dev/assets/
+      run: cp -r scr/Static/Assets/* dist/dev/Assets/
 
     - name: Deploy dev to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
