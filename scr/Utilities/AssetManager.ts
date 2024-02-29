@@ -12,9 +12,9 @@ export class AssetManager {
         ['logo', `${this.IOAssetSrc}/${this.suffix}/Assets/Img/logo.png`]
     ]
     private static readonly soundSrcList: string[][] = [
-        ['heartbeat', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/heartbeat.mp3`],
-        ['clock', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/clock.mp3`],
-        ['snapFingers', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/snapFingers.mp3`]
+        ['heartbeat', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/heartbeat.wav`],
+        ['clock', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/clock.wav`],
+        ['snapFingers', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/snapFingers.wav`]
     ]
 
 
