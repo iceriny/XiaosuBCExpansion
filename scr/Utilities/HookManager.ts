@@ -6,7 +6,10 @@ import { hookFunction, patchFunction, removePatches } from "./BCSDK";
 /**
  * 完整的钩子项 
  */
-type CompleteHookItem = [top: HookItem<HookItemContent>, bottom: HookItem<HookItemContent>, topHookSet: Set<string>, removeCallback?: () => void]
+type CompleteHookItem = [top: HookItem<HookItemContent>,
+    bottom: HookItem<HookItemContent>,
+    topHookSet: Set<string>,
+    removeCallback?: [top?: () => void, bottom?: () => void]]
 /**
  * Hook管理器
  */
@@ -29,7 +32,7 @@ export class HookManager {
      * @param priority 钩子优先级
      * @param code 钩子函数中运行的代码
      */
-    static setHook(functionName: string, name: string, priority: number, code: (args: unknown[]) => codeResult | void) {
+    static setHook(functionName: string, name: string, priority: number, code: (args: unknown[], lastResult: unknown) => codeResult | void) {
         // 获取函数对应的钩子项
         const hookItem = HookManager._hookMap.get(functionName);
         if (hookItem) {
@@ -41,7 +44,7 @@ export class HookManager {
             const topItem = this.NewHookItem;
             const bottom = this.NewHookItem;
             const _item: CompleteHookItem = [topItem, bottom, new Set()];
-            if (priority > 0) {
+            if (priority >= 0) {
                 topItem.add(name, { priority, code });
                 _item[2].add(name);
             }
@@ -69,7 +72,8 @@ export class HookManager {
 
             if (hookItem[0].size === 0 && hookItem[1].size === 0) {
                 // 如果HookItem为空，则删除HookItem
-                this._hookMap.get(functionName)?.[3]?.()
+                if (hookItem[2].has(name)) this._hookMap.get(functionName)?.[3]?.[0]?.();
+                else hookItem[3]?.[1]?.();
                 this._hookMap.delete(functionName);
 
             }
@@ -92,42 +96,67 @@ export class HookManager {
      */
     private static addHook(functionName: string, completeHookItem: CompleteHookItem) {
         // 调用hookFunction函数，传入需要hook的函数名和参数
-        const removeCallback = hookFunction(functionName, 100, (args, next) => {
-            // 遍历顶部钩子函数
-            const topItemResult: codeResult[] = completeHookItem[0].forEach((item): codeResult | void => {
-                // Utils.conDebug(`${functionName}: name: ${name}`);
-                // 运行钩子函数
-                const itemResult = item.code(args);
-                if (itemResult) {
+        const topRemoveCallback = hookFunction(functionName, 100, (args, next) => {
+            let topLastResult = null;
+            for (const item of completeHookItem[0]) {
+                const result = item.code(args, topLastResult);
+                if (result !== undefined) {
                     // 更新参数
-                    args = itemResult.args;
-                    return itemResult;
+                    args = result.args;
+                    if (result.result !== undefined) topLastResult = result.result;
                 }
-            });
+            }
+            if (topLastResult !== null) return topLastResult;
+            return next(args);
+            // // 遍历顶部钩子函数
+            // const topItemResult: codeResult[] = completeHookItem[0].forEach((item): codeResult | void => {
+            //     // Utils.conDebug(`${functionName}: name: ${name}`);
+            //     // 运行钩子函数
+            //     const itemResult = item.code(args);
+            //     if (itemResult) {
+            //         // 更新参数
+            //         args = itemResult.args;
+            //         return itemResult;
+            //     }
+            // });
             // 取出最后一个函数的结果 如果存在则返回结果
-            const topLastResult = topItemResult.length === 0 ? null : topItemResult[topItemResult.length - 1].result;
-            if (topLastResult) return topLastResult;
+            // const topLastResult = topItemResult.length === 0 ? null : topItemResult[topItemResult.length - 1].result;
+            // if (topLastResult) return topLastResult;
 
             // 调用下一个函数并返回结果
-            const result = next(args);
+            // const result = next(args);
 
-            // 遍历完成钩子的参数
-            const bottomItemResult: codeResult[] = completeHookItem[1].forEach((item): codeResult | void => {
-                // 运行钩子函数
-                const itemResult = item.code(args);
-                if (itemResult) {
-                    // 更新参数
-                    args = itemResult.args;
-                    return itemResult;
-                }
-            });
-            // 取出最后一个函数的结果 如果存在则返回结果
-            const bottomLastResult = bottomItemResult.length === 0 ? null : bottomItemResult[bottomItemResult.length - 1].result;
-            if (bottomLastResult) return bottomLastResult;
-            // 否则返回原函数的结果
-            return result;
+
         });
-        completeHookItem[3] = removeCallback;
+        const bottomRemoveCallback = hookFunction(functionName, -100, (args, next) => {
+            const OtherLastResult = next(args);
+            let bottomLastResult = OtherLastResult;
+            for (const item of completeHookItem[1]) {
+                const result = item.code(args, bottomLastResult);
+                if (result !== undefined) {
+                    // 更新参数
+                    args = result.args;
+                    if (result.result !== undefined) bottomLastResult = result.result;
+                }
+            }
+            return bottomLastResult;
+            // // 遍历完成钩子的参数
+            // const bottomItemResult: codeResult[] = completeHookItem[1].forEach((item): codeResult | void => {
+            //     // 运行钩子函数
+            //     const itemResult = item.code(args);
+            //     if (itemResult) {
+            //         // 更新参数
+            //         args = itemResult.args;
+            //         return itemResult;
+            //     }
+            // });
+            // // 取出最后一个函数的结果 如果存在则返回结果
+            // const bottomLastResult = bottomItemResult.length === 0 ? null : bottomItemResult[bottomItemResult.length - 1].result;
+            // if (bottomLastResult) return bottomLastResult;
+            // // 否则返回原函数的结果
+            // return result;
+        });
+        completeHookItem[3] = [topRemoveCallback, bottomRemoveCallback]
     }
 
     public static patchAdd(functionName: string, patches: Record<string, string | null>) {
@@ -143,7 +172,7 @@ export class HookManager {
  */
 interface HookItemContent {
     priority: number;
-    code: (args: unknown[]) => codeResult | void;
+    code: (args: unknown[], lastResult: unknown) => codeResult | void;
 }
 
 type codeResult = {

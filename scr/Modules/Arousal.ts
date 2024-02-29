@@ -4,7 +4,7 @@ import { DataManager } from "../Utilities/DataManager";
 import { HookManager } from "../Utilities/HookManager";
 import { MSGManager, PH } from "../Utilities/MessageManager";
 import { TimerProcessInjector } from "../Utilities/TimerProcessInjector";
-import { SkillSetNegativeModifier } from "../Utilities/Utilities";
+import { SetSkillModifier } from "../Utilities/Utilities";
 
 
 type AftertasteEffect = 'relax' | 'weakness' | 'twitch' | 'trance' | 'absentminded'
@@ -63,24 +63,80 @@ export class ArousalModule extends BaseModule {
             // Player.PoseMapping/////////////
             if (this._aftertaste > 120) this.Aftertaste = 120;
             this.AftertasteEffectSetHandler(true);
-        })
+        });
 
-        HookManager.setHook('Player.GetSlowLevel', 'aftertasteWeaknessEffect', 2, (args) => {
+        // 处理对慢速移动
+        HookManager.setHook('Player.GetSlowLevel', 'aftertasteWeaknessEffect', -9, (args, lastResult) => {
             if (Player.RestrictionSettings?.SlowImmunity)
                 return { args: args, result: 0 };
-            else if (this._aftertasteEffectSet.has('weakness')) {
+            let result = lastResult;
+            if (typeof result === 'number' && this.afterEffectSwitch.weakness) {
                 let slowLevel = 1;
-                if (this._aftertaste > 55) slowLevel = 2;
-                if (this._aftertaste > 60) slowLevel = 3;
-                if (this._aftertaste > 70) slowLevel = 4;
+                if (this._aftertaste > 55) slowLevel++;
+                if (this._aftertaste > 60) slowLevel++;
+                if (this._aftertaste > 70) slowLevel++;
+                if (result < slowLevel) result = slowLevel;
+                else result++;
+            }
+            return { args, result }
+        });
 
-                if (Player.HasEffect("Slow")) slowLevel++;
-                if (Player.PoseMapping.BodyFull === "AllFours") slowLevel += 2;
-                else if (Player.PoseMapping.BodyLower === "Kneel") slowLevel += 1;
-                return { args: args, result: slowLevel }
+        // 处理余韵对失明等级的增加
+        HookManager.setHook('Player.GetBlindLevel', 'aftertasteEffectAboutBlindLevel', -10, (args, lastResult) => {
+            let result = lastResult;
+            if (typeof result === 'number' && this.afterEffectSwitch.weakness) {
+                let blindLevel = 1;
+                if (this.afterEffectSwitch.twitch) blindLevel++;
+                if (this.afterEffectSwitch.trance) blindLevel++;
+                if (this.afterEffectSwitch.absentminded) blindLevel++;
+                if (result < blindLevel) result = blindLevel;
+                else result++;
+            }
+            return { args, result }
+        });
+
+        // 处理余韵对笨拙程度的影响
+        HookManager.setHook('CharacterGetClumsiness', 'aftertasteEffectAboutCharacterGetClumsiness', -12, (args, lastResult) => {
+            let result = lastResult;
+            if (typeof result === 'number' && this.afterEffectSwitch.twitch) {
+                let clumsiness = 0;
+                if (this.afterEffectSwitch.twitch) clumsiness++;
+                if (this.afterEffectSwitch.trance) clumsiness++;
+                if (this.afterEffectSwitch.absentminded) clumsiness++;
+                if (result < clumsiness) result = clumsiness;
+                else result++;
+                result = Math.min(result as number, 5);
+            }
+
+            return { args, result }
+        });
+
+        // 处理余韵对听觉的限制
+        HookManager.setHook('Player.GetDeafLevel', 'aftertasteEffectAboutDeafLevel', -11, (args, lastResult) => {
+            let result = lastResult;
+            if (typeof result === 'number' && this.afterEffectSwitch.trance) {
+                let deafLevel = 1;
+                if (this.afterEffectSwitch.absentminded) deafLevel++;
+                if (result < deafLevel) result = deafLevel;
+                else result++;
+            }
+            return { args, result }
+        })
+
+        // 处理余韵对身体姿势的限制
+        HookManager.setHook('PoseAvailable', 'aftertasteEffectAboutPose', 3, (args) => {
+            const P = args[0] as Character;
+            if (P.IsPlayer() && this.afterEffectSwitch.twitch) {
+                return { args, result: false };
             }
             return;
-        })
+        });
+
+        // 处理余韵不能离开房间
+        HookManager.setHook('ChatRoomCanLeave', 'aftertasteEffectAboutCanLeave', 10, (args) => {
+            if (this.afterEffectSwitch.absentminded) return { args, result: false };
+            return;
+        });
     }
 
     /**
@@ -119,25 +175,13 @@ export class ArousalModule extends BaseModule {
         }, {
             code: () => {
                 if (this._aftertasteEffectSet.has('relax') && SkillGetModifier(Player, 'Bondage') >= 0) {
-                    SkillSetNegativeModifier('Bondage', -5, 5000);
-                    SkillSetNegativeModifier('SelfBondage', -5, 5000);
-                    SkillSetNegativeModifier('LockPicking', -3, 5000);
-                    SkillSetNegativeModifier('Evasion', -8, 5000);
-                    SkillSetNegativeModifier('Willpower', -3, 5000);
-                    SkillSetNegativeModifier('Infiltration', -7, 5000);
-                    SkillSetNegativeModifier('Dressage', -7, 5000);
-                }
-            },
-            name: "AftertasteEffectHandle"
-        });
-
-        // 处理高潮余韵的抽搐效果
-        TimerProcessInjector.add(98, 3000, () => {
-            return this._aftertaste >= 70;
-        }, {
-            code: () => {
-                if (this._aftertasteEffectSet.has('twitch')) {
-                    AssetManager.PlayAudio('heartbeat')
+                    SetSkillModifier('Bondage', 0.4, 5000);
+                    SetSkillModifier('SelfBondage', 0.4, 5000);
+                    SetSkillModifier('LockPicking', 0.4, 5000);
+                    SetSkillModifier('Evasion', 0.1, 5000);
+                    SetSkillModifier('Willpower', 0.8, 5000);
+                    SetSkillModifier('Infiltration', 0.2, 5000);
+                    SetSkillModifier('Dressage', 0.2, 5000);
                 }
             },
             name: "AftertasteEffectHandle"
@@ -148,14 +192,14 @@ export class ArousalModule extends BaseModule {
             return CurrentScreen == "ChatRoom" && Player.MemberNumber !== undefined;
         }, {
             code: () => {
+                // 高潮时的禁用
                 const orgasmStage = Player.ArousalSettings?.OrgasmStage;
                 if (orgasmStage == 1) {
                     this.needSendEnduringMessage = true;
                     if (!this.inputDisabled) {
                         this.DisableInput(true);
                     }
-                }
-                else if (orgasmStage == 0) {
+                } else if (orgasmStage == 0) {
                     this.needSendEnduringMessage = false;
                     if (this.inputDisabled) {
                         this.DisableInput(false);
@@ -211,36 +255,100 @@ export class ArousalModule extends BaseModule {
         if (this._aftertaste < 0) this.Aftertaste = 0;
     }
 
-    private _aftertasteEffectSet: Set<AftertasteEffect> = new Set();
-    private AftertasteEffectSetHandler(pushToServer: boolean): void {
-        const newAftertasteEffectSet: Set<AftertasteEffect> = new Set()
-        if (this._aftertaste > 20) {
-            newAftertasteEffectSet.add("relax"); //放松
-            MSGManager.SendActivity(`${PH.s}的身体在快感冲击下软了下来。浑身软绵绵的使不上力气。`, Player.MemberNumber!);
-        }
-        if (this._aftertaste > 50) {
-            newAftertasteEffectSet.add("weakness"); // 虚弱
-            MSGManager.SendActivity(`${PH.s}的身体在连续的快感冲击中瘫软起来，似乎已经很难支撑起身体了。`, Player.MemberNumber!);
-        }
-        if (this._aftertaste > 70) {
-            newAftertasteEffectSet.add("twitch"); // 抽搐
-            MSGManager.SendActivity(`连续深度的高潮冲击下，${PH.s}的身体不自觉的开始抽搐，再这么下去...`, Player.MemberNumber!);
-        }
-        if (this._aftertaste > 90) {
-            newAftertasteEffectSet.add("trance"); // 恍惚
-            MSGManager.SendActivity(`高潮过于猛烈，${PH.s}的脑袋已经不清楚了。恍恍惚惚，意识断断续续。`, Player.MemberNumber!);
-        }
-        if (this._aftertaste > 100) {
-            newAftertasteEffectSet.add("absentminded"); // 失能
-            MSGManager.SendActivity(`强大的、连续的、不可抵挡的高潮冲击下，${PH.s}已经无法控制自己的身体。只能在无意识中抽搐着身体，发出细软的声音。这样的话...`, Player.MemberNumber!);
-        }
-        DataManager.data.set('aftertasteEffect', newAftertasteEffectSet, 'online', pushToServer);
-        this._aftertasteEffectSet = newAftertasteEffectSet;
+    /** 余韵效果开关 */
+    private afterEffectSwitch: { [name in AftertasteEffect]: boolean } = {
+        relax: false,
+        weakness: false,
+        twitch: false,
+        trance: false,
+        absentminded: false
     }
-
-
-
-
+    /** 余韵效果描述 */
+    private afterEffectDescribe: { [name in AftertasteEffect]: string[] } = {
+        relax: [`${PH.s}的身体在快感冲击下软了下来。浑身软绵绵的使不上力气。`,
+        `${PH.s}的身体渐渐恢复，重新恢复了正常的体力。`],
+        weakness: [`${PH.s}的身体在连续的快感冲击中变得越来越软，越来越无力，已经难以控制自己的身体。`,
+        `${PH.s}的身体虽然还是软绵绵的，但大概可以正常走路了。`],
+        twitch: [`连续深度的高潮冲击下，${PH.s}的身体不自觉的开始抽搐，再这么下去...`,
+        `${PH.s}停止了抽搐，但还是很难支撑起自己的身体。`],
+        trance: [`高潮过于猛烈，${PH.s}的脑袋已经不清楚了。恍恍惚惚，意识断断续续。当然，也难以走动了。`,
+        `${PH.s}的意识恢复了，但身体还是时不时的抽动一下。`],
+        absentminded: [`强大的、连续的、不可抵挡的高潮冲击下，${PH.s}已经完全无法控制自己的身体。只能在无意识中抽搐着身体，发出细软的声音。这样的话...`,
+        `${PH.s}虽然还是恍恍惚惚，意识算是渐渐恢复了，希望这段时间没有发生什么。`]
+    }
+    // private afterEffectAction: { [name in AftertasteEffect]: (() => void)[] } = {
+    //     relax: [() => {
+    //         throw new Error("Not Implemented");
+    //     }],
+    //     weakness: [() => {
+    //         PoseSetActive(Player, 'LegsClosed');
+    //     }],
+    //     twitch: [() => {
+    //     }],
+    //     trance: [() => {
+    //     }],
+    //     absentminded: [() => {
+    //     }]
+    // }
+    /**
+     * 开关余韵效果
+     * @param name 要开关的效果名字
+     * @param value 开还是关?
+     */
+    private setAftertasteEffectSwitch(name: AftertasteEffect, value: boolean) {
+        const switchState = this.afterEffectSwitch[name];
+        if (switchState != value) {
+            if (value) {
+                this._aftertasteEffectSet.add(name);
+                if (name === 'weakness' && Player.IsStanding()) PoseSetActive(Player, 'Kneel'); // 当虚弱时 自动跪下
+                if (name === 'twitch') AssetManager.PlayAudio('heartbeat'); // 当抽搐时 自动播放 心跳音效
+                MSGManager.SendActivity(this.afterEffectDescribe[name][0], Player.MemberNumber!);
+            } else {
+                this._aftertasteEffectSet.delete(name);
+                MSGManager.SendActivity(this.afterEffectDescribe[name][1], Player.MemberNumber!);
+            }
+            this.afterEffectSwitch[name] = value;
+        }
+    }
+    /** 余韵效果的集合 */
+    private _aftertasteEffectSet: Set<AftertasteEffect> = new Set();
+    /**
+     * 余韵效果的判断与处理
+     * @param pushToServer 是否同步到服务器
+     */
+    private AftertasteEffectSetHandler(pushToServer: boolean): void {
+        //放松
+        if (this._aftertaste > 20) {
+            this.setAftertasteEffectSwitch("relax", true);
+        } else if (this._aftertaste < 20) {
+            this.setAftertasteEffectSwitch("relax", false)
+        }
+        // 虚弱
+        if (this._aftertaste > 50) {
+            this.setAftertasteEffectSwitch("weakness", true)
+        } else if (this._aftertaste < 50) {
+            this.setAftertasteEffectSwitch("weakness", false)
+        }
+        // 抽搐
+        if (this._aftertaste > 70) {
+            this.setAftertasteEffectSwitch("twitch", true)
+        } else if (this._aftertaste < 70) {
+            this.setAftertasteEffectSwitch("twitch", false)
+        }
+        // 恍惚
+        if (this._aftertaste > 90) {
+            this.setAftertasteEffectSwitch("trance", true)
+        } else if (this._aftertaste < 90) {
+            this.setAftertasteEffectSwitch("trance", false)
+        }
+        // 失能
+        if (this._aftertaste > 100) {
+            this.setAftertasteEffectSwitch("absentminded", true)
+        } else if (this._aftertaste < 100) {
+            this.setAftertasteEffectSwitch("absentminded", false)
+        }
+        DataManager.data.set('aftertasteEffect', this._aftertasteEffectSet, 'online', pushToServer);
+    }
 
     /** 默认的输入框样式 */
     inputDefaultStyle: { backgroundColor: string, borderColor: string, borderRadius: string } | undefined = undefined;

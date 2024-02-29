@@ -20,7 +20,7 @@ export enum DebugMSGType {
  * @param style 可选的css风格参数
  * @returns 无
  */
-export function conDebug(msg: XSDebugMSG | string,isError: boolean = false, color: string | null = null, style: string | null = null) {
+export function conDebug(msg: XSDebugMSG | string, isError: boolean = false, color: string | null = null, style: string | null = null) {
     if (DEBUG === false) return;
 
 
@@ -51,7 +51,10 @@ export function conDebug(msg: XSDebugMSG | string,isError: boolean = false, colo
     }
 }
 
-export function SkillSetNegativeModifier(name: SkillType, value: number, duration: number) {
-    const bondage = SkillGetLevelReal(Player, name);
-    SkillSetModifier(Player, name, bondage + SkillGetModifier(Player, name) - value <= 0 ? -bondage : -value, duration);
+/** 技能倍率buff */
+export function SetSkillModifier(name: SkillType, value: number, duration: number) {
+    const realLevel = SkillGetLevelReal(Player, name);
+    const targetValue = Math.floor(realLevel * value);
+    const correction  = targetValue - realLevel;
+    SkillSetModifier(Player, name, correction, duration);
 }
