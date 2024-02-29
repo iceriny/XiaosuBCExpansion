@@ -2,7 +2,7 @@ import { BaseModule } from "../Base/BaseModule";
 //import { AssetManager } from "../Utilities/AssetManager";
 import { DataManager } from "../Utilities/DataManager";
 import { HookManager } from "../Utilities/HookManager";
-import { MSGManager } from "../Utilities/MessageManager";
+import { MSGManager, PH } from "../Utilities/MessageManager";
 import { TimerProcessInjector } from "../Utilities/TimerProcessInjector";
 import { SkillSetNegativeModifier } from "../Utilities/Utilities";
 
@@ -57,15 +57,15 @@ export class ArousalModule extends BaseModule {
      */
     private HookList(): void {
         // 处理高潮余韵等级的增加
-        HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 0, () => {
-            const addedNumber = ActivityOrgasmGameResistCount === 0 ? 1 : ActivityOrgasmGameResistCount;
+        HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 2, () => {
+            const addedNumber = ActivityOrgasmGameResistCount + 1;
             this.Aftertaste = this._aftertaste + addedNumber;
-            Player.PoseMapping/////////////
+            // Player.PoseMapping/////////////
             if (this._aftertaste > 120) this.Aftertaste = 120;
             this.AftertasteEffectSetHandler(true);
         })
 
-        HookManager.setHook('Player.GetSlowLevel', 'aftertasteWeaknessEffect', 0, (args) => {
+        HookManager.setHook('Player.GetSlowLevel', 'aftertasteWeaknessEffect', 2, (args) => {
             if (Player.RestrictionSettings?.SlowImmunity)
                 return { args: args, result: 0 };
             else if (this._aftertasteEffectSet.has('weakness')) {
@@ -205,7 +205,7 @@ export class ArousalModule extends BaseModule {
      * 处理余韵等级的回落
      */
     private AftertasteFallBack(): void {
-        const n = 30 - ActivityOrgasmGameResistCount
+        const n = 20 - ActivityOrgasmGameResistCount
         const fallBackNumber = n <= 0 ? 1 : n;
         this.Aftertaste = this.Aftertaste - fallBackNumber;
         if (this._aftertaste < 0) this.Aftertaste = 0;
@@ -216,18 +216,23 @@ export class ArousalModule extends BaseModule {
         const newAftertasteEffectSet: Set<AftertasteEffect> = new Set()
         if (this._aftertaste > 20) {
             newAftertasteEffectSet.add("relax"); //放松
+            MSGManager.SendActivity(`${PH.s}的身体在快感冲击下软了下来。浑身软绵绵的使不上力气。`, Player.MemberNumber!);
         }
         if (this._aftertaste > 50) {
             newAftertasteEffectSet.add("weakness"); // 虚弱
+            MSGManager.SendActivity(`${PH.s}的身体在连续的快感冲击中瘫软起来，似乎已经很难支撑起身体了。`, Player.MemberNumber!);
         }
         if (this._aftertaste > 70) {
             newAftertasteEffectSet.add("twitch"); // 抽搐
+            MSGManager.SendActivity(`连续深度的高潮冲击下，${PH.s}的身体不自觉的开始抽搐，再这么下去...`, Player.MemberNumber!);
         }
         if (this._aftertaste > 90) {
             newAftertasteEffectSet.add("trance"); // 恍惚
+            MSGManager.SendActivity(`高潮过于猛烈，${PH.s}的脑袋已经不清楚了。恍恍惚惚，意识断断续续。`, Player.MemberNumber!);
         }
         if (this._aftertaste > 100) {
             newAftertasteEffectSet.add("absentminded"); // 失能
+            MSGManager.SendActivity(`强大的、连续的、不可抵挡的高潮冲击下，${PH.s}已经无法控制自己的身体。只能在无意识中抽搐着身体，发出细软的声音。这样的话...`, Player.MemberNumber!);
         }
         DataManager.data.set('aftertasteEffect', newAftertasteEffectSet, 'online', pushToServer);
         this._aftertasteEffectSet = newAftertasteEffectSet;
