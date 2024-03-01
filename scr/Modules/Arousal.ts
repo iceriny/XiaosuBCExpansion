@@ -4,12 +4,13 @@ import { DataManager } from "../Utilities/DataManager";
 import { HookManager } from "../Utilities/HookManager";
 import { MSGManager, PH } from "../Utilities/MessageManager";
 import { TimerProcessInjector } from "../Utilities/TimerProcessInjector";
-import { SetSkillModifier } from "../Utilities/Utilities";
+import { SetSkillModifier, conDebug, segmentForCH, getMoan, getDynamicProbability } from "../Utilities/Utilities";
 
 
 type AftertasteEffect = 'relax' | 'weakness' | 'twitch' | 'trance' | 'absentminded'
 export class ArousalModule extends BaseModule {
     private _aftertaste: number = 0;
+    private static readonly MAX_AFTERTASTE = 120;
     /** 对于忍耐高潮时的反应描述 */
     private descriptionOfEnduranceActivities = [
         `{source}脚趾一蜷一缩，难耐的交织.`,
@@ -60,8 +61,7 @@ export class ArousalModule extends BaseModule {
         HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 2, () => {
             const addedNumber = ActivityOrgasmGameResistCount + 1;
             this.Aftertaste = this._aftertaste + addedNumber;
-            // Player.PoseMapping/////////////
-            if (this._aftertaste > 120) this.Aftertaste = 120;
+            if (this._aftertaste > ArousalModule.MAX_AFTERTASTE) this.Aftertaste = ArousalModule.MAX_AFTERTASTE;
             this.AftertasteEffectSetHandler(true);
         });
 
@@ -95,20 +95,12 @@ export class ArousalModule extends BaseModule {
             return { args, result }
         });
 
-        // 处理余韵对笨拙程度的影响
-        HookManager.setHook('CharacterGetClumsiness', 'aftertasteEffectAboutCharacterGetClumsiness', -12, (args, lastResult) => {
-            let result = lastResult;
-            if (typeof result === 'number' && this.afterEffectSwitch.twitch) {
-                let clumsiness = 0;
-                if (this.afterEffectSwitch.twitch) clumsiness++;
-                if (this.afterEffectSwitch.trance) clumsiness++;
-                if (this.afterEffectSwitch.absentminded) clumsiness++;
-                if (result < clumsiness) result = clumsiness;
-                else result++;
-                result = Math.min(result as number, 5);
+        // 处理余韵对是否能够跪下的影响 这个函数返回false时不代表按钮不能按 只是表示不能直接切换为跪下站起  需要进行游戏
+        HookManager.setHook('Player.CanKneel', 'aftertasteEffectAboutCanKneel', 9, (args) => {
+            if (this.afterEffectSwitch.weakness) {
+                return { args, result: false }
             }
-
-            return { args, result }
+            return
         });
 
         // 处理余韵对听觉的限制
@@ -137,6 +129,61 @@ export class ArousalModule extends BaseModule {
             if (this.afterEffectSwitch.absentminded) return { args, result: false };
             return;
         });
+
+        // 处理余韵对发送消息的限制
+        HookManager.setHook('CommandParse', 'aftertasteEffectAboutChat', 10, (args) => {
+            if (this.afterEffectSwitch.relax) {
+                let msg = args[0] as string;
+                if (!msg.startsWith('*') && !msg.startsWith(CommandsKey) && !msg.startsWith('.') && !msg.startsWith('@') && !msg.startsWith('`')) {
+                    const segmentList = segmentForCH(msg)
+                    if (segmentList === null) {
+                        conDebug('程序正在处理 消息分词，但您的浏览器不支持该功能!!! 无法显示余韵的特殊字符串加工效果。')
+                    } else {
+                        let cacheStr = '';
+                        for (let i = 0; i < segmentList.length; i++) {
+                            const subStr = segmentList[i];
+                            if (i === 0) cacheStr = subStr;
+                            else {
+                                cacheStr += this.msgSubStringHandle(subStr)
+                            }
+                        }
+                        msg = cacheStr;
+                    }
+                    (args[0] as string) = '*'.concat(msg).concat('....^(虚弱)');
+                }
+            }
+            return { args };
+        });
+    }
+    /**
+     * 处理消息中经过分词后的子字符串的显示效果
+     * 使用动态概率影响效果 概率分布符合 logistic 函数
+     * 简单来说 当余韵等级越高时 越容易出现屏蔽单词
+     * 等级越低时 越容易出现呻吟和口吃
+     * @param subStr 传入的子字符串
+     * @returns 处理后的字符串
+     */
+    private msgSubStringHandle(subStr: string): string {
+        // 获取三个概率判断结果
+        const probability_bold = Math.random() < getDynamicProbability(this._aftertaste, 0, ArousalModule.MAX_AFTERTASTE, 0.2, 0.8);
+        const probability_moan = Math.random() < getDynamicProbability(this._aftertaste, 0, ArousalModule.MAX_AFTERTASTE, 0.1, 0, true);
+        const probability_negative = Math.random() < getDynamicProbability(this._aftertaste, 0, ArousalModule.MAX_AFTERTASTE, 0.05, -0.02, true);
+
+        let formattedSubStr = subStr;
+
+        if (probability_bold) {
+            formattedSubStr = `..${'*'.repeat(subStr.length)}..`;
+        }
+
+        if (probability_moan) {
+            formattedSubStr += `${getMoan()}...`;
+        }
+
+        if (probability_negative) {
+            formattedSubStr += `-${formattedSubStr}`;
+        }
+
+        return formattedSubStr;
     }
 
     /**
@@ -242,8 +289,17 @@ export class ArousalModule extends BaseModule {
                 "ActivityOrgasmGameResistCount = 0;":
                     "ActivityOrgasmGameResistCount = Math.round(ActivityOrgasmGameResistCount / 2);"
             });
-    }
 
+        HookManager.patchAdd('ChatRoomMenuDraw',
+            { // 处理余韵对跪下的按钮的颜色处理
+                // 处理什么时候为黄色
+                'else if (name === "Kneel" && (Player.AllowedActivePoseMapping.BodyLower || Player.AllowedActivePoseMapping.BodyFull))':
+                    'else if (name === "Kneel" && (Player.AllowedActivePoseMapping.BodyLower || Player.AllowedActivePoseMapping.BodyFull|| (Player?.XSBE?.aftertasteEffect?.has("weakness"))))',
+                // 处理什么时候为红色
+                'if (ChatRoomGetUpTimer === 0 && (ChatRoomCanAttemptStand() || ChatRoomCanAttemptKneel()))':
+                    'if (ChatRoomGetUpTimer === 0 && (ChatRoomCanAttemptStand() || ChatRoomCanAttemptKneel()) && !Player?.XSBE?.aftertasteEffect?.has("absentminded"))'
+            });
+    }
 
     /**
      * 处理余韵等级的回落
@@ -289,25 +345,25 @@ export class ArousalModule extends BaseModule {
             if (value) {
                 this._aftertasteEffectSet.add(name);
 
-                if (name === 'relax' ) {
+                if (name === 'relax') {
                     AssetManager.PlayAudio('heartbeat', 0.5);
-                   if (Player.IsStanding()) PoseSetActive(Player, 'Kneel'); // 当放松时 自动跪下
+                    if (Player.IsStanding()) PoseSetActive(Player, 'Kneel'); // 当放松时 自动跪下
                 }
                 if (name === 'weakness') {
-                    AssetManager.PlayAudio('heartbeat', 0.8);
+                    AssetManager.PlayAudio('heartbeat');
                 }
                 if (name === 'twitch') {
-                    AssetManager.PlayAudio('heartbeat'); // 当抽搐时 自动播放 心跳音效
+                    AssetManager.PlayAudio('faultSound'); // 当抽搐时 自动播放 心跳音效
                 }
                 if (name === 'trance') {
-                    AssetManager.PlayAudio('heartbeat');
-                    AssetManager.PlayAudio('faultSound');
+                    // AssetManager.PlayAudio('heartbeat');
+                    AssetManager.PlayAudio('sleep');
                 }
                 if (name === 'absentminded') {
-                    AssetManager.PlayAudio('heartbeat');
+                    // AssetManager.PlayAudio('heartbeat');
                     AssetManager.PlayAudio('sleep')
                 }
-                
+
                 MSGManager.SendActivity(this.afterEffectDescribe[name][0], Player.MemberNumber!);
             } else {
                 this._aftertasteEffectSet.delete(name);
