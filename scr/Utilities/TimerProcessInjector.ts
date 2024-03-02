@@ -2,7 +2,7 @@ import { hookFunction } from "./BCSDK";
 // import { conDebug } from "./Utilities";
 
 type RegisteredProcessItem = { priority: number, nextInterval: number, interval: number | (() => number), condition: () => boolean, nextTriggerTime: number }
-export class TimerProcessInjector {
+export default class TimerProcessInjector {
     private static ProcessSequence: TimerProcessInjectorSequence;
     private static RegisteredProcess: Map<string, RegisteredProcessItem>;
     private static ProcessCodeMap: Map<string, () => void>;

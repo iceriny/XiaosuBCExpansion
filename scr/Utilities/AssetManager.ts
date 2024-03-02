@@ -1,7 +1,7 @@
 import { conDebug } from "./Utilities";
 
 
-export class AssetManager {
+export default class AssetManager {
     private static AssetMap = new Map<string, Map<string, unknown>>([
         ['img', new Map<string, HTMLImageElement>()],
         ['sound', new Map<string, HTMLAudioElement>()]

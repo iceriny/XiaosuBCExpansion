@@ -10,7 +10,7 @@ export const PH = {
     s: selfPlaceholder,
     t: targetPlaceholder
 }
-export class MSGManager {
+export default class MSGManager {
     /**
      * 发送*表情信息
      * @param msg 要发送的内容

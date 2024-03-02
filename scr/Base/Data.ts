@@ -1,3 +1,5 @@
+import { conDebug } from "../Utilities/Utilities";
+
 /** @Mod的数据类 */
 export type dataType = 'online' | 'setting' | 'local'
 
@@ -16,15 +18,22 @@ export class Data<T extends IData> {
     /** 本地数据的key集合 */
     private localKeys: Set<keyof T>;
 
-    private static readonly defaultData = {
-        XSBE: {
-            Settings: {},
-            OnlineData: {}
-        },
-        CharacterOnlineSharedSettings: {
-            XSBE: {}
-        }
+    private static readonly defaultCharacterOnlineSharedSettings: XSBE_SharedSettings = {
+        version: '',
+        hasWombTattoos: false,
+        aftertaste: 0,
     }
+    private static readonly defaultSetting: XSBE_Settings = {
+        enabled: false
+    }
+    private static readonly defaultXSBE: XSBE_PlayerData = {
+        version: '',
+        timestamp: 0,
+        hasWombTattoos: false,
+        aftertaste: 0,
+        Settings: this.defaultSetting,
+    }
+
     /**
      * 创建数据类
      * @param data 以此为模板创建数据
@@ -37,22 +46,20 @@ export class Data<T extends IData> {
         this.settingKeys = new Set(settingKeys);
         this.localKeys = new Set(localKeys);
         if (!Player.XSBE) {
-            Player['XSBE'] = Data.defaultData.XSBE
+            Player['XSBE'] = Data.defaultXSBE
         }
         if (!Player.OnlineSharedSettings?.XSBE) {
-            Player.OnlineSharedSettings!['XSBE'] = Data.defaultData.CharacterOnlineSharedSettings.XSBE
+            Player.OnlineSharedSettings!['XSBE'] = Data.defaultCharacterOnlineSharedSettings
         }
         for (const k in this.data) {
-            this.dataSetHandle(k, this.data[k], false)
+            this.initSingleDataHandle(k, this.data[k])
         }
 
         if (ExtensionStorage()) {
-            // 比对服务器数据和本地数据谁更新
+            // 比对服务器数据和本地数据谁更新 并且使用更新的数据
             this.compareServerDataAndLocalDataAndUpdate();
-        } else {
-            this.updateExtensionSettings();
         }
-
+        this.updateExtensionSettings();
     }
 
 
@@ -60,17 +67,17 @@ export class Data<T extends IData> {
      * 比较服务器数据和本地数据并更新
      */
     private compareServerDataAndLocalDataAndUpdate() {
+        let ExtObj = this.getExtensionSettings()
+        if (!ExtObj) ExtObj = {}
         // 获取服务器数据
-        const serverExtensionSettingObject = this.getExtensionSettings() as Record<keyof T, T[keyof T]> | Record<string, never>;
+        const serverExtensionSettingObject = ExtObj as Record<keyof T, T[keyof T]> | Record<string, never>;
         // 获取服务器数据的时间戳
         const serverTimestamp: number = (serverExtensionSettingObject['timestamp'] as number | undefined) ?? 0;
-        // 获取本地数据
-        const localDataObject = this.getLocalStorage() as Record<keyof T, T[keyof T]>;
         // 获取本地数据的时间戳
-        const localTimestamp: number = (localDataObject['timestamp'] as number | undefined) ?? 0;
+        const localTimestamp: number = this.getDataFromLocalStorage('timestamp') ?? 0;
 
         if (serverExtensionSettingObject) {
-            if (serverTimestamp >= localTimestamp) {
+            if (serverTimestamp > localTimestamp) {
                 // 如果服务器数据的时间戳大于等于本地数据的时间戳，则更新更新内存数据
                 for (const k in serverExtensionSettingObject) {
                     if (Object.hasOwnProperty.call(this.data, k)) {
@@ -78,19 +85,7 @@ export class Data<T extends IData> {
                         const dataValue = this.data[k as keyof T];
                         const serverValue = serverExtensionSettingObject[k];
                         if (dataValue !== serverValue) {
-                            this.data[k as keyof T] = serverValue;
-                        }
-                    }
-                }
-            } else {
-                // 如果本地数据的时间戳大于服务器数据的时间戳，则使用本地数据更新内存数据
-                for (const k in localDataObject) {
-                    if (Object.hasOwnProperty.call(this.data, k)) {
-                        if (k == 'version') continue;// 将来添加版本号的比对功能
-                        const dataValue = this.data[k as keyof T];
-                        const localValue = localDataObject[k];
-                        if (dataValue !== localValue) {
-                            this.data[k as keyof T] = localValue;
+                            this.set(k, serverValue)
                         }
                     }
                 }
@@ -115,6 +110,7 @@ export class Data<T extends IData> {
      * @param upload 是否同步到服务器
      */
     set<K extends keyof T>(key: K, value: T[K], dataType?: dataType, upload: boolean = false) {
+        // 设置类内数据与数据类型标记
         this.data[key] = value;
         if (dataType) {
             switch (dataType) {
@@ -131,34 +127,65 @@ export class Data<T extends IData> {
                     break;
             }
         }
-        this.dataSetHandle(key, value, upload);
+
+        // 设置Player中的数据
+        // 表示是否是设置数据
+        let isSettings = false;
+        // 如果在本地key中
+        if (this.localKeys.has(key)) {
+            // 设置/更新本地空间中的数据
+            localStorage.setItem(this.getLocalKeyFromKey(key), JSON.stringify(value));
+
+            // 如果是设置数据 则把内容放入Player.XSBE的setting中
+            if (this.settingKeys.has(key)) {
+                Player.XSBE!.Settings![key as string] = value;
+                isSettings = true;
+            } else if (this.onlineKeys.has(key) && Player.OnlineSharedSettings) {
+                // 如果是在线数据 则把内容放入Player.OnlineSharedSettings.XSBE中
+                Player.OnlineSharedSettings.XSBE![key as string] = value
+            }
+            // 如果需要更新到服务器 则更新到服务器 换句话说是放入Player.ExtensionSettings中
+            if (upload) this.updateExtensionSettings();
+        }
+
+        // 如果不是设置数据则放入Player.XSBE中
+        if (!isSettings) Player.XSBE![key as string] = value;
     }
 
 
 
-    /**
-     * 处理数据 this.data 与 Player和服务器 之间的同步
-     * @param key 设置的数据的键
-     * @param value 设置数据的值
-     * @param upload 是否同步到服务器
-     */
-    private dataSetHandle<K extends keyof T>(key: K, value: T[K], upload: boolean) {
+
+    private initSingleDataHandle<K extends keyof T>(key: K, value: T[K]) {
+        let _value: T[K] = value;
+        let updatePlayer = true;
+        // 如果k为本地数据key
         if (this.localKeys.has(key)) {
-            localStorage.setItem(this.getLocalKeyFromKey(key), JSON.stringify(value));
-            if (this.settingKeys.has(key)) {
-                Player.XSBE!.Settings![key as string] = value;
-            } else if (upload && this.onlineKeys.has(key)) {
-                if (Player.OnlineSharedSettings) Player.OnlineSharedSettings!.XSBE![key as string] = value;
-                Player.XSBE![key as string] = value;
-                this.updateExtensionSettings();
-            } else {
-                // set on Player
-                Player.XSBE![key as string] = value;
+            // 尝试获取本地数据
+            const localValue = this.getDataFromLocalStorage(key)
+            // 如果获取到 将获取到的值用于后续初始化
+            if (localValue) {
+                _value = localValue;
             }
-        } else {
-            // set on Player
-            Player.XSBE![key as string] = value;
+
+            if (this.settingKeys.has(key)) {
+                Player.XSBE!.Settings![key as string] = _value;
+                updatePlayer = false;
+            } else if (this.onlineKeys.has(key)) {
+
+                if (!Player.OnlineSharedSettings?.XSBE?.[key as string]) {
+                    Player.OnlineSharedSettings!.XSBE![key as string] = _value;
+                } else {
+                    _value = Player.OnlineSharedSettings.XSBE[key as string] as T[K];
+                }
+                // this.updateExtensionSettings();
+            }
         }
+        // set on Player
+        if (key === 'timestamp') {
+            _value = CommonTime() as T[K];
+        }
+        if (updatePlayer) Player.XSBE![key as string] = _value;
+        this.data[key] = _value;
     }
 
     /**
@@ -183,26 +210,37 @@ export class Data<T extends IData> {
         ServerPlayerExtensionSettingsSync('XSBE');
     }
 
-    /**
-     * 获取服务器数据并更新本地数据
-     */
-    downloadExtensionSettings<K extends keyof T>() {
-        if (ExtensionStorage()) {
-            const ExtensionSettingsObject = this.getExtensionSettings() as Record<K, T[K]>;
-            for (const key in ExtensionSettingsObject) {
-                if (Object.hasOwnProperty.call(this.data, key)) {
-                    this.set(key as K, ExtensionSettingsObject[key]);
-                }
-            }
-        }
-    }
+    // /**
+    //  * 获取服务器数据并更新本地数据
+    //  */
+    // downloadExtensionSettings<K extends keyof T>() {
+    //     const value = this.getExtensionSettings();
+    //     if (ExtensionStorage() && value) {
+    //         const ExtensionSettingsObject = value as Record<K, T[K]>;
+    //         for (const key in ExtensionSettingsObject) {
+    //             if (Object.hasOwnProperty.call(this.data, key)) {
+    //                 this.set(key as K, ExtensionSettingsObject[key]);
+    //             }
+    //         }
+    //     }
+    // }
 
     /**
      * 获取服务器的ExtensionSettings字符串解压后返回为一个对象
      * @returns 返回从服务器获取到的数据的对象
      */
     getExtensionSettings() {
-        return JSON.parse(LZString.decompressFromBase64(ExtensionStorage()) ?? '') as object;
+        let result;
+        try {
+            result = JSON.parse(LZString.decompressFromBase64(ExtensionStorage()) ?? '')
+        } catch (error) {
+            conDebug({
+                name: 'Decompress ExtensionSettings Fail!!!  返回 null !!',
+                content: error
+            }, true);
+            result = null;
+        }
+        return result as object | null;
     }
 
     /**
@@ -218,6 +256,14 @@ export class Data<T extends IData> {
             }
         }
         return localStorageObject;
+    }
+
+    getDataFromLocalStorage<K extends keyof T>(key: K): T[K] | undefined {
+        const value = localStorage.getItem(this.getLocalKeyFromKey(key)) as string;
+        if (value) {
+            return JSON.parse(value) as T[K];
+        }
+        return undefined;
     }
 
     /**

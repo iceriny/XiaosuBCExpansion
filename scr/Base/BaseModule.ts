@@ -3,7 +3,7 @@ import { ModuleInfo, ModulePriority } from "../Models/ModuleInfo";
 /**
  * 模块的基础抽象类
  */
-export abstract class BaseModule {
+export default abstract class BaseModule {
     /** 模块的信息 */
     Info: ModuleInfo = {
         name: "base",

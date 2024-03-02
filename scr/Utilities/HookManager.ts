@@ -13,7 +13,7 @@ type CompleteHookItem = [top: HookItem<HookItemContent>,
 /**
  * Hook管理器
  */
-export class HookManager {
+export default class HookManager {
 
     /**
      * 钩子映射表

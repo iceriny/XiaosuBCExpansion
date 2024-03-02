@@ -1,9 +1,9 @@
 import { hookFunction } from "./Utilities/BCSDK";
 import { conDebug, DebugMSGType } from "./Utilities/Utilities";
-import { DataManager } from "./Utilities/DataManager";
-import { TimerProcessInjector } from "./Utilities/TimerProcessInjector";
-import { ModulesLoader } from "./Utilities/Modules/ModulesLoader";
-import { AssetManager } from "./Utilities/AssetManager";
+import DataManager from "./Utilities/DataManager";
+import TimerProcessInjector from "./Utilities/TimerProcessInjector";
+import ModulesLoader from "./Utilities/Modules/ModulesLoader";
+import AssetManager from "./Utilities/AssetManager";
 // import { HookManager } from "./Utilities/HookManager";
 
 function initWait() {
@@ -35,13 +35,9 @@ function init() {
 
     AssetManager.cacheAssets();
     
-    // HookManager.setHook('ChatRoomSync', 'Test HookManager', -1, (args) => {
-    //     AssetManager.PlayAudio('heartbeat')
-
-    //     HookManager.removeHook('ChatRoomSync', 'Test HookManager');
-    //     return {
-    //         args: args
-    //     }
+    // HookManager.setHook('ChatRoomSync', 'Test HookManager', -1, () => {
+    //     testOverrideFunction();
+    //     return
     // })
 
 

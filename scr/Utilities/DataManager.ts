@@ -1,8 +1,11 @@
 import { Data } from "../Base/Data"
 
 
-export class DataManager {
+export default class DataManager {
     private static private_data: Data<IData>;
+    private static readonly onlineKeys: onlineKeys = ['version', 'hasWombTattoos', 'aftertaste'];
+    private static readonly settingKeys: settingKeys = ['enabled'];
+    private static readonly localKeys: localKeys = ['timestamp', 'version', 'hasWombTattoos', 'aftertaste', 'enabled'];
 
     public static Init() {
         DataManager.private_data = new Data({
@@ -11,7 +14,7 @@ export class DataManager {
             enabled: false as boolean,
             hasWombTattoos: false as boolean,
             aftertaste: 0
-        }, ['hasWombTattoos', 'aftertaste'], ['enabled'], ["version", "timestamp", "hasWombTattoos", "enabled", "aftertaste"])
+        }, this.onlineKeys, this.settingKeys, this.localKeys)
 
         window.XSBE_Data = DataManager.private_data
     }
@@ -23,5 +26,4 @@ export class DataManager {
         if (C.IsPlayer()) return this.data as T;
         else return C.OnlineSharedSettings?.XSBE as T;
     }
-
 }

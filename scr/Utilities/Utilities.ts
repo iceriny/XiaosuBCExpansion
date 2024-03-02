@@ -12,6 +12,7 @@ interface XSDebugMSG {
 export enum DebugMSGType {
     DebugLog,
     Workflow_Log,
+    Error
 }
 /**
  * 发送debug信息到控制台
@@ -50,6 +51,7 @@ export function conDebug(msg: XSDebugMSG | string, isError: boolean = false, col
         console.debug("%c小酥的模组信息: ", `background-color: ${theColor}; font-weight: bold;`, result);
     }
 }
+setAPI('XSBE_Debug', conDebug)
 
 /** 技能倍率buff */
 export function SetSkillModifier(name: SkillType, value: number, duration: number) {
@@ -127,7 +129,7 @@ export function getDynamicProbability(value: number, min: number = 0, max: numbe
 
     // 返回概率并限制在0~1之间以避免 计算浮点数时的精度丢失 导致的概率溢出
     return LimitedScope(0, 1, probability)
-} 
+}
 
 /**
  * 限制一个数值在指定范围内
@@ -138,4 +140,12 @@ export function getDynamicProbability(value: number, min: number = 0, max: numbe
  */
 export function LimitedScope(min: number, max: number, value: number): number {
     return Math.min(max, Math.max(min, value));
+}
+
+export function setAPI(name: string, value: unknown): void {
+    if (window.XSBE_API) {
+        window.XSBE_API[name] = value;
+    } else {
+        window.XSBE_API = { [name]: value }
+    }
 }

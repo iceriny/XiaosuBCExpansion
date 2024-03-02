@@ -1,12 +1,12 @@
 /** @模块加载器 */
 
-import { BaseModule } from "../../Base/BaseModule";
-import { WombTattoosModule } from "../../Modules/WombTattoos";
+import BaseModule from "../../Base/BaseModule";
 import * as MInfo from "../../Models/ModuleInfo";
+import ArousalModule from "../../Modules/Arousal";
+import WombTattoosModule from "../../Modules/WombTattoos";
 import { conDebug } from "../Utilities";
-import { ArousalModule } from "../../Modules/Arousal";
 
-export class ModulesLoader {
+export default class ModulesLoader {
     /** @模块集合 用于加载模块 */
     private static modules = new Map<MInfo.moduleName, BaseModule>();
     /** @模块列表 用于注册模块 并排序*/

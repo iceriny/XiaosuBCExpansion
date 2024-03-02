@@ -1,14 +1,14 @@
-import { BaseModule } from "../Base/BaseModule";
-import { AssetManager } from "../Utilities/AssetManager";
-import { DataManager } from "../Utilities/DataManager";
-import { HookManager } from "../Utilities/HookManager";
-import { MSGManager, PH } from "../Utilities/MessageManager";
-import { TimerProcessInjector } from "../Utilities/TimerProcessInjector";
-import { SetSkillModifier, conDebug, segmentForCH, getMoan, getDynamicProbability } from "../Utilities/Utilities";
+import BaseModule from "../Base/BaseModule";
+import AssetManager from "../Utilities/AssetManager";
+import DataManager from "../Utilities/DataManager";
+import HookManager from "../Utilities/HookManager";
+import MSGManager, { PH } from "../Utilities/MessageManager";
+import TimerProcessInjector from "../Utilities/TimerProcessInjector";
+import { SetSkillModifier, conDebug, getDynamicProbability, getMoan, segmentForCH } from "../Utilities/Utilities";
 
 
 type AftertasteEffect = 'relax' | 'weakness' | 'twitch' | 'trance' | 'absentminded'
-export class ArousalModule extends BaseModule {
+export default class ArousalModule extends BaseModule {
     private _aftertaste: number = 0;
     private static readonly MAX_AFTERTASTE = 120;
     /** 对于忍耐高潮时的反应描述 */
@@ -39,7 +39,9 @@ export class ArousalModule extends BaseModule {
     }
     public Unload(): void { }
     public Init(): void { }
-    public Load(): void { }
+    public Load(): void {
+        this._aftertaste = DataManager.data.get('aftertaste') ?? 0;
+    }
 
     public getArousalSettings = (C: Character | PlayerCharacter): ArousalSettingsType | undefined => C.ArousalSettings;
 
@@ -64,6 +66,11 @@ export class ArousalModule extends BaseModule {
             if (this._aftertaste > ArousalModule.MAX_AFTERTASTE) this.Aftertaste = ArousalModule.MAX_AFTERTASTE;
             this.AftertasteEffectSetHandler(true);
         });
+
+        // 在进入聊天室时处理余韵等级初始化
+        HookManager.setHook('ChatRoomSync', 'Test HookManager', -10, () => {
+            this.AftertasteEffectSetHandler(false);
+        })
 
         // 处理对慢速移动
         HookManager.setHook('Player.GetSlowLevel', 'aftertasteWeaknessEffect', -9, (args, lastResult) => {
@@ -134,7 +141,8 @@ export class ArousalModule extends BaseModule {
         HookManager.setHook('CommandParse', 'aftertasteEffectAboutChat', 10, (args) => {
             if (this.afterEffectSwitch.relax) {
                 let msg = args[0] as string;
-                if (!msg.startsWith('*') && !msg.startsWith(CommandsKey) && !msg.startsWith('.') && !msg.startsWith('@') && !msg.startsWith('`')) {
+                const firstChar = msg.charAt(0);
+                if (firstChar !== '*' && firstChar !== CommandsKey && firstChar !== '.' && firstChar !== '@' && firstChar !== '`' && firstChar !== '!') {
                     const segmentList = segmentForCH(msg)
                     if (segmentList === null) {
                         conDebug('程序正在处理 消息分词，但您的浏览器不支持该功能!!! 无法显示余韵的特殊字符串加工效果。')
