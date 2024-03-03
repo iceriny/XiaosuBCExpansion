@@ -9,8 +9,8 @@ export const ExtensionStorage = () => Player.ExtensionSettings?.XSBE as string;
 /**
  * mod所使用的数据的类
  */
-export class Data<T extends IData> {
-    private prefix: string = "XSBE_";
+export class DataBody<T extends IDataBody> {
+
     /** 在线分享数据的key集合 */
     private onlineKeys: Set<keyof T>;
     /** 设置数据的key集合 */
@@ -46,10 +46,10 @@ export class Data<T extends IData> {
         this.settingKeys = new Set(settingKeys);
         this.localKeys = new Set(localKeys);
         if (!Player.XSBE) {
-            Player['XSBE'] = Data.defaultXSBE
+            Player['XSBE'] = DataBody.defaultXSBE
         }
         if (!Player.OnlineSharedSettings?.XSBE) {
-            Player.OnlineSharedSettings!['XSBE'] = Data.defaultCharacterOnlineSharedSettings
+            Player.OnlineSharedSettings!['XSBE'] = DataBody.defaultCharacterOnlineSharedSettings
         }
         for (const k in this.data) {
             this.initSingleDataHandle(k, this.data[k])
@@ -70,7 +70,7 @@ export class Data<T extends IData> {
         let ExtObj = this.getExtensionSettings()
         if (!ExtObj) ExtObj = {}
         // 获取服务器数据
-        const serverExtensionSettingObject = ExtObj as Record<keyof T, T[keyof T]> | Record<string, never>;
+        const serverExtensionSettingObject = ExtObj as Record<keyof T, T[keyof T]> //| Record<string, never>;
         // 获取服务器数据的时间戳
         const serverTimestamp: number = (serverExtensionSettingObject['timestamp'] as number | undefined) ?? 0;
         // 获取本地数据的时间戳
@@ -85,10 +85,11 @@ export class Data<T extends IData> {
                         const dataValue = this.data[k as keyof T];
                         const serverValue = serverExtensionSettingObject[k];
                         if (dataValue !== serverValue) {
-                            this.set(k, serverValue)
+                            this.set(k, serverValue as T[keyof T], false)
                         }
                     }
                 }
+                this.setTimestampToLocalStorage();
             }
         }
     }
@@ -109,24 +110,24 @@ export class Data<T extends IData> {
      * @param value 设置数据的值
      * @param upload 是否同步到服务器
      */
-    set<K extends keyof T>(key: K, value: T[K], dataType?: dataType, upload: boolean = false) {
+    set<K extends keyof T>(key: K, value: T[K], upload: boolean = false, updateLocalTimestamp: boolean = true) {
         // 设置类内数据与数据类型标记
         this.data[key] = value;
-        if (dataType) {
-            switch (dataType) {
-                case 'online':
-                    this.onlineKeys.add(key);
-                    this.localKeys.add(key);
-                    break;
-                case 'setting':
-                    this.settingKeys.add(key);
-                    this.localKeys.add(key);
-                    break;
-                case 'local':
-                    this.localKeys.add(key);
-                    break;
-            }
-        }
+        // if (dataType) {
+        //     switch (dataType) {
+        //         case 'online':
+        //             this.onlineKeys.add(key);
+        //             this.localKeys.add(key);
+        //             break;
+        //         case 'setting':
+        //             this.settingKeys.add(key);
+        //             this.localKeys.add(key);
+        //             break;
+        //         case 'local':
+        //             this.localKeys.add(key);
+        //             break;
+        //     }
+        // }
 
         // 设置Player中的数据
         // 表示是否是设置数据
@@ -135,6 +136,7 @@ export class Data<T extends IData> {
         if (this.localKeys.has(key)) {
             // 设置/更新本地空间中的数据
             localStorage.setItem(this.getLocalKeyFromKey(key), JSON.stringify(value));
+            if (updateLocalTimestamp) this.setTimestampToLocalStorage();
 
             // 如果是设置数据 则把内容放入Player.XSBE的setting中
             if (this.settingKeys.has(key)) {
@@ -272,7 +274,13 @@ export class Data<T extends IData> {
      * @returns 本地空间的键
      */
     getLocalKeyFromKey(key: keyof T): string {
-        return `${this.prefix}${key as string}`;
+        return `XSBE_${key as string}`;
+    }
+    /**
+     * 将时间戳保存到本地空间
+     */
+    setTimestampToLocalStorage() {
+        localStorage.setItem(this.getLocalKeyFromKey('timestamp' as keyof T), CommonTime().toString());
     }
 
 }

@@ -1,6 +1,6 @@
 import BaseModule from "../Base/BaseModule";
-import HookManager from "../Utilities/HookManager";
-import { conDebug, setAPI } from "../Utilities/Utilities";
+// import HookManager from "../Utilities/HookManager";
+// import { setAPI } from "../Utilities/Utilities";
 // import { DataManager } from "../Utilities/DataManager";
 
 
@@ -20,25 +20,50 @@ export default class WombTattoosModule extends BaseModule {
     public Init(): void { }
     public Load(): void { }
     public Run(): void {
-        // PreferenceLoad函数在设置界面加载时被调用
-        HookManager.setHook("PreferenceLoad", 'PreferenceLoadDebug', 10, () => {
-
-            // 展示了设置如何 包装原函数并替换原函数，并且储存原函数到API的方法，如果后续用的多 可以尝试做出Manager!
-            if (typeof PreferenceSubscreenBCTArousalLoad === 'function' && !window.XSBE_API?.originalPreferenceSubscreenBCTArousalLoad) {
-                setAPI('originalPreferenceSubscreenBCTArousalLoad', PreferenceSubscreenBCTArousalLoad)
-                PreferenceSubscreenBCTArousalLoad = function () {
-                    (window.XSBE_API!.originalPreferenceSubscreenBCTArousalLoad as () => void)();
-                    // 执行自己的操作!
-                    conDebug('My!!   PreferenceSubscreenBCTArousalLoad TEST!!!!')
-                    WombTattoosModule.BCTArousalProgressMultiplierInputElement = document.getElementById('InputArousalProgressMultiplier') as HTMLInputElement | null;
-                }
-            }
-        })
+        // // PreferenceLoad函数在设置界面加载时被调用
+        // HookManager.setHook("PreferenceLoad", 'PreferenceLoadDebug', 10, () => {
+        //     // 展示了设置如何 包装原函数并替换原函数，并且储存原函数到API的方法，如果后续用的多 可以尝试做出Manager!
+        //     if (typeof PreferenceSubscreenBCTArousalLoad === 'function' && !window.XSBE_API?.originalPreferenceSubscreenBCTArousalLoad) {
+        //         setAPI('originalPreferenceSubscreenBCTArousalLoad', PreferenceSubscreenBCTArousalLoad)
+        //         PreferenceSubscreenBCTArousalLoad = function () {
+        //             if (Player?.BCT) {
+        //                 if (!Player?.BCT?.bctSettings.splitOrgasmArousal) Player.BCT.bctSettings.splitOrgasmArousal = true;
+        //                 if (!Player?.BCT?.bctSettings.arousalAffectsOrgasmProgress) Player.BCT.bctSettings.splitOrgasmArousal = true;
+        //             }
+        //             (window.XSBE_API!.originalPreferenceSubscreenBCTArousalLoad as () => void)();
+        //             // 执行自己的操作!
+        //         }
+        //     }
+        //     if (typeof PreferenceSubscreenBCTArousalClick === 'function' && !window.XSBE_API?.originalPreferenceSubscreenBCTArousalClick) {
+        //         setAPI('originalPreferenceSubscreenBCTArousalClick', PreferenceSubscreenBCTArousalClick)
+        //         PreferenceSubscreenBCTArousalClick = function () {
+        //             (window.XSBE_API!.originalPreferenceSubscreenBCTArousalClick as () => void)();
+        //             if (Player?.BCT) {
+        //                 if (!Player?.BCT?.bctSettings.splitOrgasmArousal) Player.BCT.bctSettings.splitOrgasmArousal = true;
+        //                 if (!Player?.BCT?.bctSettings.arousalAffectsOrgasmProgress) Player.BCT.bctSettings.arousalAffectsOrgasmProgress = true;
+        //             }
+        //         }
+        //     }
+        //     if (typeof PreferenceSubscreenBCTArousalRun === 'function' && !window.XSBE_API?.originalPreferenceSubscreenBCTArousalRun) {
+        //         setAPI('originalPreferenceSubscreenBCTArousalRun', PreferenceSubscreenBCTArousalRun)
+        //         PreferenceSubscreenBCTArousalRun = function () {
+        //             (window.XSBE_API!.originalPreferenceSubscreenBCTArousalRun as () => void)();
+        //             const BCTInputElementsName = ['InputArousalProgressMultiplier',
+        //                     'InputOrgasmProgressMultiplier',
+        //                     'InputArousalDecayMultiplier',
+        //                     'InputOrgasmDecayMultiplier'];
+        //                 for (const n of BCTInputElementsName) {
+        //                     const e = document.getElementById(n) as HTMLInputElement | null;
+        //                     if (e !== null) {
+        //                         e.disabled = true;
+        //                     }
+        //                 }
+        //         }
+        //     }
+        // })
     }
     public Unload(): void { }
 
-    private static BCTArousalProgressMultiplierInputElement: HTMLInputElement | null = null;
-//InputOrgasmProgressMultiplier InputArousalDecayMultiplier InputOrgasmDecayMultiplier
     /**
      * 判断目标角色是否有淫纹
      */
@@ -49,5 +74,8 @@ export default class WombTattoosModule extends BaseModule {
         }
         return false;
     }
+
+    // 添加淫纹
+    
 
 }

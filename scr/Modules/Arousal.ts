@@ -7,7 +7,6 @@ import TimerProcessInjector from "../Utilities/TimerProcessInjector";
 import { SetSkillModifier, conDebug, getDynamicProbability, getMoan, segmentForCH } from "../Utilities/Utilities";
 
 
-type AftertasteEffect = 'relax' | 'weakness' | 'twitch' | 'trance' | 'absentminded'
 export default class ArousalModule extends BaseModule {
     private _aftertaste: number = 0;
     private static readonly MAX_AFTERTASTE = 120;
@@ -48,7 +47,7 @@ export default class ArousalModule extends BaseModule {
     public getOrgasmStage = (C: Character | PlayerCharacter): number => this.getArousalSettings(C)?.OrgasmStage ?? 0;
 
     public set Aftertaste(level: number) {
-        DataManager.data.set('aftertaste', level, 'online', true);
+        DataManager.set('aftertaste', level, true);
         this._aftertaste = level;
     }
     public get Aftertaste() {
@@ -60,17 +59,38 @@ export default class ArousalModule extends BaseModule {
      */
     private HookList(): void {
         // 处理高潮余韵等级的增加
-        HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 2, () => {
+        HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 2, (args) => {
+            if(!(args[0] as Character).IsPlayer()) return;
+
             const addedNumber = ActivityOrgasmGameResistCount + 1;
             this.Aftertaste = this._aftertaste + addedNumber;
             if (this._aftertaste > ArousalModule.MAX_AFTERTASTE) this.Aftertaste = ArousalModule.MAX_AFTERTASTE;
             this.AftertasteEffectSetHandler(true);
         });
+        // 处理同步ActivityOrgasmGameResistCount到player
+        HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', -2, (args) => {
+            if((args[0] as Character).IsPlayer()) DataManager.set('resistCount', ActivityOrgasmGameResistCount, true);
+        });
 
-        // 在进入聊天室时处理余韵等级初始化
+        // 在进入聊天室时处理 余韵等级 高潮抵抗 快感进度 初始化
         HookManager.setHook('ChatRoomSync', 'Test HookManager', -10, () => {
             this.AftertasteEffectSetHandler(false);
-        })
+            ActivityOrgasmGameResistCount = DataManager.data.get('resistCount')
+            // const dataProgress = DataManager.data.get('progress');
+            // Player.ArousalSettings!.Progress = dataProgress;
+            // if (Player.BCT) {
+            //     Player.BCT.splitOrgasmArousal.arousalProgress = dataProgress;
+            // }
+            // if (Player.BCEArousal) Player.BCEArousalProgress = dataProgress;
+            // setTimeout(() => {
+            //     BCT_API.ActivityChatRoomBCTArousalSync(Player);
+            // }, 1200);
+        });
+
+        // 将进度信息同步到Mod
+        HookManager.setHook('ActivityChatRoomArousalSync', 'ArousalSync', -10, () => {
+            DataManager.set('progress', Player.ArousalSettings!.Progress);
+        });
 
         // 处理对慢速移动
         HookManager.setHook('Player.GetSlowLevel', 'aftertasteWeaknessEffect', -9, (args, lastResult) => {
@@ -205,9 +225,10 @@ export default class ArousalModule extends BaseModule {
             code: () => {
                 if (Player.ArousalSettings!.Progress >= 93) {
                     ActivityOrgasmGameResistCount++;
-                    DataManager.data.set('resistCount', ActivityOrgasmGameResistCount, 'online', true)
+                    DataManager.set('resistCount', ActivityOrgasmGameResistCount, true)
                 } else if (Player.ArousalSettings!.Progress < 60 && ActivityOrgasmGameResistCount >= 1) {
                     ActivityOrgasmGameResistCount--;
+                    DataManager.set('resistCount', ActivityOrgasmGameResistCount, true)
                 }
             },
             name: "EdgeTimer"
@@ -399,7 +420,7 @@ export default class ArousalModule extends BaseModule {
             this.setAftertasteEffectSwitch(effect, this._aftertaste > threshold);
         }
 
-        DataManager.data.set('aftertasteEffect', this._aftertasteEffectSet, 'online', pushToServer);
+        DataManager.set('aftertasteEffect', this._aftertasteEffectSet, pushToServer);
     }
 
     /** 默认的输入框样式 */
