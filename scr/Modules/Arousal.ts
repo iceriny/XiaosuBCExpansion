@@ -39,12 +39,24 @@ export default class ArousalModule extends BaseModule {
     public Unload(): void { }
     public Init(): void { }
     public Load(): void {
+        // 取出数据到类内
         this._aftertaste = DataManager.data.get('aftertaste') ?? 0;
+
+        // 尝试同步进度
+        const dataProgress = Math.floor(DataManager.data.get('progress'));
+        Player.ArousalSettings!.Progress = dataProgress;
+        // if (Player.BCT) {
+        //     Player.BCT.splitOrgasmArousal.arousalProgress = dataProgress;
+        // }
+        if (Player.BCEArousal) Player.BCEArousalProgress = dataProgress;
+        // setTimeout(() => {
+        //     BCT_API.ActivityChatRoomBCTArousalSync(Player);
+        // }, 1200);
     }
 
-    public getArousalSettings = (C: Character | PlayerCharacter): ArousalSettingsType | undefined => C.ArousalSettings;
+    //public getArousalSettings = (C: Character | PlayerCharacter): ArousalSettingsType | undefined => C.ArousalSettings;
 
-    public getOrgasmStage = (C: Character | PlayerCharacter): number => this.getArousalSettings(C)?.OrgasmStage ?? 0;
+    //public getOrgasmStage = (C: Character | PlayerCharacter): number => this.getArousalSettings(C)?.OrgasmStage ?? 0;
 
     public set Aftertaste(level: number) {
         DataManager.set('aftertaste', level, true);
@@ -60,7 +72,7 @@ export default class ArousalModule extends BaseModule {
     private HookList(): void {
         // 处理高潮余韵等级的增加
         HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 2, (args) => {
-            if(!(args[0] as Character).IsPlayer()) return;
+            if (!(args[0] as Character).IsPlayer()) return;
 
             const addedNumber = ActivityOrgasmGameResistCount + 1;
             this.Aftertaste = this._aftertaste + addedNumber;
@@ -68,27 +80,18 @@ export default class ArousalModule extends BaseModule {
             this.AftertasteEffectSetHandler(true);
         });
         // 处理同步ActivityOrgasmGameResistCount到player
-        HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', -2, (args) => {
-            if((args[0] as Character).IsPlayer()) DataManager.set('resistCount', ActivityOrgasmGameResistCount, true);
+        HookManager.setHook('ActivityOrgasmStart', 'ResistCountSync', -2, (args) => {
+            if ((args[0] as Character).IsPlayer()) DataManager.set('resistCount', ActivityOrgasmGameResistCount, true);
         });
 
-        // 在进入聊天室时处理 余韵等级 高潮抵抗 快感进度 初始化
-        HookManager.setHook('ChatRoomSync', 'Test HookManager', -10, () => {
+        // 在进入聊天室时处理 余韵等级 高潮抵抗 初始化
+        HookManager.setHook('ChatRoomSync', 'EnterChatRoomInitData', -10, () => {
             this.AftertasteEffectSetHandler(false);
             ActivityOrgasmGameResistCount = DataManager.data.get('resistCount')
-            // const dataProgress = DataManager.data.get('progress');
-            // Player.ArousalSettings!.Progress = dataProgress;
-            // if (Player.BCT) {
-            //     Player.BCT.splitOrgasmArousal.arousalProgress = dataProgress;
-            // }
-            // if (Player.BCEArousal) Player.BCEArousalProgress = dataProgress;
-            // setTimeout(() => {
-            //     BCT_API.ActivityChatRoomBCTArousalSync(Player);
-            // }, 1200);
         });
 
         // 将进度信息同步到Mod
-        HookManager.setHook('ActivityChatRoomArousalSync', 'ArousalSync', -10, () => {
+        HookManager.setHook('ActivityChatRoomArousalSync', 'ArousalToDataSync', -10, () => {
             DataManager.set('progress', Player.ArousalSettings!.Progress);
         });
 
