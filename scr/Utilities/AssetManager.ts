@@ -6,8 +6,8 @@ import { conDebug } from "./Utilities";
  */
 export default class AssetManager {
     // 资产映射表，用于存储加载的图像和音频资产
-    private static AssetMap = new Map<string, Map<string, unknown>>([[
-        'img', new Map<string, HTMLImageElement>()],
+    private static AssetMap = new Map<string, Map<string, unknown>>([
+        ['img', new Map<string, HTMLImageElement>()],
         ['sound', new Map<string, HTMLAudioElement>()]
     ]);
 
@@ -16,17 +16,17 @@ export default class AssetManager {
     // 根据DEBUG标志决定资源的后缀
     private static readonly suffix = DEBUG ? 'dev' : 'main'
     // 图像资源列表
-    private static readonly imgSrcList: string[][] = [
+    private static readonly imgSrcMap: Map<string, string> = new Map<string, string>([
         ['logo', `${this.IOAssetSrc}/${this.suffix}/Assets/Img/logo.png`]
-    ]
+    ])
     // 音频资源列表
-    private static readonly soundSrcList: string[][] = [
+    private static readonly soundSrcMap: Map<string, string> = new Map<string, string>([
         ['heartbeat', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/heartbeat.mp3`],
         ['clock', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/clock.mp3`],
         ['snapFingers', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/snapFingers.mp3`],
         ['faultSound', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/faultSound.mp3`],
         ['sleep', `${this.IOAssetSrc}/${this.suffix}/Assets/Audio/sleep.mp3`]
-    ]
+    ])
 
     /**
      * 缓存图像资源。
@@ -61,10 +61,10 @@ export default class AssetManager {
      * 预加载所有指定的图像和音频资产。
      */
     public static cacheAssets(): void {
-        for (const src of AssetManager.imgSrcList) {
+        for (const src of AssetManager.imgSrcMap) {
             this.cacheImg(src[1], src[0]);
         }
-        for (const src of AssetManager.soundSrcList) {
+        for (const src of AssetManager.soundSrcMap) {
             this.cacheSound(src[1], src[0]);
         }
     }
@@ -94,8 +94,15 @@ export default class AssetManager {
      * @returns 对应的HTMLImageElement对象，如果未找到则返回undefined
      */
     public static GatImg(name: string): HTMLImageElement {
-        const img = this.AssetMap.get('img')!.get(name) as HTMLImageElement;
-        return img;
+        const img = this.AssetMap.get('img')!.get(name) as HTMLImageElement | undefined;
+        if (img) return img;
+        else throw new Error(`未找到图像资源: ${name}`)
+    }
+
+    public static GetImgSrc(name: string): string {
+        const src = this.imgSrcMap.get(name)
+        if (src) return src;
+        else throw new Error(`未找到图像资源: ${name}`)
     }
 
     /**

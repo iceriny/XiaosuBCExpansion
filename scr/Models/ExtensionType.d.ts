@@ -2,7 +2,9 @@ interface Window {
     XSBE_Data: unknown;
     XSBE_API?: {
         [key: string]: unknown;
-    }
+    };
+    PreferenceSubscreenXSBEPreferenceRun?: ()=>void;
+    PreferenceSubscreenXSBEPreferenceClick?: ()=>void;
 }
 
 interface PlayerCharacter {

@@ -4,6 +4,7 @@ import DataManager from "./Utilities/DataManager";
 import TimerProcessInjector from "./Utilities/TimerProcessInjector";
 import ModulesLoader from "./Utilities/Modules/ModulesLoader";
 import AssetManager from "./Utilities/AssetManager";
+import SettingPage from "./Screen/Preference/SettingPage";
 // import { HookManager } from "./Utilities/HookManager";
 
 function initWait() {
@@ -49,6 +50,8 @@ function init() {
         content: DataManager.data
     });
     TimerProcessInjector.Init();
+
+    SettingPage.Init();
 
     ModulesLoader.registerModule();
     ModulesLoader.initModules();
