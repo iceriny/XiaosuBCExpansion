@@ -20,7 +20,7 @@ export default class MainPage extends BasePage {
                 type:"button",
                 label:"兴奋与高潮机制",
                 HoveringText: "涉及兴奋值和高潮的机制调整。",
-                SCRLocation: [400, 200, 200, 80],
+                SCRLocation: [350, 200, 350, 60],
                 color: "White",
                 click: () => {
                     this.subScreen.get('XSBE_arousal')?.PageLoad();

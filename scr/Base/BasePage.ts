@@ -9,7 +9,7 @@ export default abstract class BasePage {
     protected static readonly ExitButton: { SCRLocation: SCRLocation } = { SCRLocation: [1815, 75, 90, 90] }
     /** 保存的原游戏的退出函数 */
     protected static OriginExitFunction: (() => void) | undefined;
-
+    // private static OriginTextAlign: CanvasTextAlign | undefined;   // TextAlign
 
     /** 页面名称 */
     public abstract Name: PageName;
@@ -90,6 +90,7 @@ export default abstract class BasePage {
     PageLoad(): void {
         // 缓存原退出函数
         if (!BasePage.OriginExitFunction) BasePage.OriginExitFunction = CurrentScreenFunctions.Exit;
+        // if (!BasePage.OriginTextAlign) BasePage.OriginTextAlign = GUITool.TextAlign;    // TextAlign
         // 将原游戏所调用的退出函数设置为当前页面的退出函数
         CurrentScreenFunctions.Exit = this.Exit.bind(this);
         // 设置页面为本页面
@@ -104,9 +105,11 @@ export default abstract class BasePage {
         // 绘制退出按钮
         GUITool.DrawButton(BasePage.ExitButton.SCRLocation, "", "White", "Icons/Exit.png");
         // 绘制组件
+        // GUITool.TextAlign = 'left';    // TextAlign
         for (const c of this.Components) {
             GUITool.DrawComponent(c);
         }
+        // GUITool.TextAlign = BasePage.OriginTextAlign!;    // TextAlign
     }
 
     /**
@@ -129,6 +132,9 @@ export default abstract class BasePage {
         if (this.previousScreen === null) {
             CurrentScreenFunctions.Exit = BasePage.OriginExitFunction;
             BasePage.OriginExitFunction = undefined;
+
+            // GUITool.TextAlign = BasePage.OriginTextAlign!;    // TextAlign
+            // BasePage.OriginTextAlign = undefined;    // TextAlign
             this.SetScreen("");
         } else { // 设置当前页面为上一个页面
             this.previousScreen.PageLoad();

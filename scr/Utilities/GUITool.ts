@@ -91,4 +91,21 @@ export default class GUITool {
             }
         }
     }
+
+    /**
+     * 设置主画布的文本对齐方式
+     * @param testAlign 要设置的文本对齐方式
+     * 类型为CanvasTextAlign:  "center" | "end" | "left" | "right" | "start"
+     */
+    static set TextAlign(testAlign: CanvasTextAlign) {
+        MainCanvas.textAlign = testAlign; // 设置主画布的文本对齐方式
+    }
+
+    /**
+     * 获取主画布当前的文本对齐方式
+     * @returns 返回主画布当前的文本对齐方式
+     */
+    static get TextAlign() {
+        return MainCanvas.textAlign;
+    }
 }
