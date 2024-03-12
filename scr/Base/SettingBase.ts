@@ -1,4 +1,3 @@
-import { moduleName } from "../Models/ModuleInfo";
 import * as SettingsType from "../Models/Settings";
 export default abstract class SettingBase<T extends Map<string, unknown>> {
     protected abstract values: T;

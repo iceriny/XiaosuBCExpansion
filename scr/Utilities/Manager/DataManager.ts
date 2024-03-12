@@ -1,4 +1,4 @@
-import { DataBody } from "../Base/Data"
+import { DataBody } from "../../Base/Data"
 
 /**
  * DataManager 类

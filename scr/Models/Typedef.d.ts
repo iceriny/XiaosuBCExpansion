@@ -354,8 +354,7 @@ type PreferenceSubscreenName =
 	"Security" | "Online" | "Visibility" | "Immersion" | "Graphics" | "Controller" | "Notifications" |
 	"Gender" | "Scripts" | XSBEPreferenceSubscreenName
 	;
-type XSBEPreferenceSubscreenName =
-	"XSBEPreferenceRun"
+type XSBEPreferenceSubscreenName = PageName;
 
 type FetishName =
 	"Bondage" | "Gagged" | "Blindness" | "Deafness" | "Chastity" | "Exhibitionist" | "Masochism" |

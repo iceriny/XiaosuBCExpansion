@@ -1,4 +1,4 @@
-import { ModuleInfo, ModulePriority } from "../Models/ModuleInfo";
+
 
 /**
  * 模块的基础抽象类
@@ -7,7 +7,7 @@ export default abstract class BaseModule {
     /** 模块的信息 */
     Info: ModuleInfo = {
         name: "base",
-        priority: ModulePriority.Bottom,
+        priority: -999,
         description: "模块基类，所有的模块都继承这个模块"
     }
     /** 模块是否加载完成 */

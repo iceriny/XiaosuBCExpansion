@@ -1,6 +1,5 @@
 /** @hook函数工具 */
-// import { ModulePriority } from "../Models/ModuleInfo";
-import { hookFunction, patchFunction, removePatches } from "./BCSDK";
+import { hookFunction, patchFunction, removePatches } from "../BCSDK";
 // import * as Utils from "../Utilities/Utilities";
 
 /**
@@ -98,11 +97,12 @@ export default class HookManager {
         // 调用hookFunction函数，传入需要hook的函数名和参数
 
         // 顶部钩子 在原函数和其他函数之前运行
-        const topRemoveCallback = hookFunction(functionName, 100, (args, next) => {
+        const topRemoveCallback = hookFunction(functionName, 999, (args, next) => {
             let topLastResult = null;
             for (const item of completeHookItem[0]) {
                 const result = item.code(args, topLastResult);
                 if (result !== undefined) {
+                    // if (result.break) return;
                     // 更新参数
                     args = result.args;
                     if (result.result !== undefined) topLastResult = result.result;
@@ -112,12 +112,13 @@ export default class HookManager {
             return next(args);
         });
         // 底部钩子 在原函数和其他函数之后运行
-        const bottomRemoveCallback = hookFunction(functionName, -100, (args, next) => {
+        const bottomRemoveCallback = hookFunction(functionName, -999, (args, next) => {
             const OtherLastResult = next(args);
             let bottomLastResult = OtherLastResult;
             for (const item of completeHookItem[1]) {
                 const result = item.code(args, bottomLastResult);
                 if (result !== undefined) {
+                    // if (result.break) return;
                     // 更新参数
                     args = result.args;
                     if (result.result !== undefined) bottomLastResult = result.result;
@@ -158,6 +159,7 @@ interface HookItemContent {
 type codeResult = {
     args: unknown[];
     result?: unknown;
+    // break?: boolean;
 }
 
 class HookItem<T extends HookItemContent> implements Iterable<T> {

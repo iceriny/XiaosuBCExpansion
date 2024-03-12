@@ -1,9 +1,9 @@
 import BaseModule from "../Base/BaseModule";
-import AssetManager from "../Utilities/AssetManager";
-import DataManager from "../Utilities/DataManager";
-import HookManager from "../Utilities/HookManager";
-import MSGManager, { PH } from "../Utilities/MessageManager";
-import TimerProcessInjector from "../Utilities/TimerProcessInjector";
+import AssetManager from "../Utilities/Manager/AssetManager";
+import DataManager from "../Utilities/Manager/DataManager";
+import HookManager from "../Utilities/Manager/HookManager";
+import MSGManager, { PH } from "../Utilities/Manager/MessageManager";
+import TimerProcessInjector from "../Utilities/Manager/TimerProcessInjector";
 import { SetSkillModifier, conDebug, getDynamicProbability, getMoan, segmentForCH } from "../Utilities/Utilities";
 
 

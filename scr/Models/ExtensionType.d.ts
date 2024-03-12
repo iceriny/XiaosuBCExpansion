@@ -3,8 +3,7 @@ interface Window {
     XSBE_API?: {
         [key: string]: unknown;
     };
-    PreferenceSubscreenXSBEPreferenceRun?: ()=>void;
-    PreferenceSubscreenXSBEPreferenceClick?: ()=>void;
+    [key: string]: ()=>void;
 }
 
 interface PlayerCharacter {

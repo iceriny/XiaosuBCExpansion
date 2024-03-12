@@ -1,10 +1,10 @@
 import { hookFunction } from "./Utilities/BCSDK";
 import { conDebug, DebugMSGType } from "./Utilities/Utilities";
-import DataManager from "./Utilities/DataManager";
-import TimerProcessInjector from "./Utilities/TimerProcessInjector";
+import DataManager from "./Utilities/Manager/DataManager";
+import TimerProcessInjector from "./Utilities/Manager/TimerProcessInjector";
 import ModulesLoader from "./Utilities/Modules/ModulesLoader";
-import AssetManager from "./Utilities/AssetManager";
-import SettingPage from "./Screen/Preference/SettingPage";
+import AssetManager from "./Utilities/Manager/AssetManager";
+import PreferencePageManager from "./Utilities/Manager/PreferencePageManager";
 // import { HookManager } from "./Utilities/HookManager";
 
 function initWait() {
@@ -15,7 +15,7 @@ function initWait() {
     });
     if (CurrentScreen == null || CurrentScreen === 'Login') {
         // 加载模组
-        hookFunction('LoginResponse', -100, (args, next) => {
+        hookFunction('LoginResponse', -999, (args, next) => {
             const result = next(args);
             conDebug({
                 name: `Init! Login Response caught`,
@@ -51,8 +51,6 @@ function init() {
     });
     TimerProcessInjector.Init();
 
-    SettingPage.Init();
-
     ModulesLoader.registerModule();
     ModulesLoader.initModules();
     ModulesLoader.loadModules();
@@ -61,6 +59,7 @@ function init() {
     TimerProcessInjector.Load();
     TimerProcessInjector.Run();
 
+    PreferencePageManager.Init();
 }
 
 

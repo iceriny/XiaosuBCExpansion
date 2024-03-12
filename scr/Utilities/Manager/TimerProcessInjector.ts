@@ -1,4 +1,4 @@
-import { hookFunction } from "./BCSDK";
+import { hookFunction } from "../BCSDK";
 // import { conDebug } from "./Utilities";
 
 type RegisteredProcessItem = { priority: number, nextInterval: number, interval: number | (() => number), condition: () => boolean, nextTriggerTime: number }
@@ -32,7 +32,7 @@ export default class TimerProcessInjector {
     }
 
     public static Run(): void {
-        hookFunction("TimerProcess", 100, (args, next) => {
+        hookFunction("TimerProcess", 999, (args, next) => {
             this.activatedProcess = [];
 
             const currentTime = Date.now();
