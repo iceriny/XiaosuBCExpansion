@@ -20,7 +20,7 @@ type ComponentsType = "label" | "button" | "checkbox";
 /**
  * 组件接口
  */
-interface Components {
+interface Component {
     type: ComponentsType;
     SCRLocation: SCRLocation;
     color: string;
@@ -29,7 +29,7 @@ interface Components {
 /**
  * 标题接口
  */
-interface Label extends Components {
+interface Label extends Component {
     type: 'label';
     label: string;
     color: string;
@@ -37,7 +37,7 @@ interface Label extends Components {
 /**
  * 按钮接口
  */
-interface Button extends Components {
+interface Button extends Component {
     type: 'button';
     label: string;
     img?: string;
@@ -47,7 +47,7 @@ interface Button extends Components {
 /**
  * 复选框接口
  */
-interface Checkbox extends Components {
+interface Checkbox extends Component {
     type: 'checkbox';
     label: string;
     Checked: boolean;

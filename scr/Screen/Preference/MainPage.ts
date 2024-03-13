@@ -9,7 +9,7 @@ export default class MainPage extends BasePage {
 
     protected subScreen: Map<PageName, BasePage> = new Map();
 
-    protected Components: Array<Components> = [];
+    protected Components: Array<Component> = [];
     Init(): void {
         // 本页面初始化
         super.Init(ArousalPage);

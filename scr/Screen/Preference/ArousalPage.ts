@@ -7,7 +7,7 @@ export default class ArousalPage extends BasePage {
 
     public subScreen: Map<PageName, BasePage> = new Map();
 
-    public Components: Array<Components> = [];
+    public Components: Array<Component> = [];
     Init(): void {
         super.Init();
 

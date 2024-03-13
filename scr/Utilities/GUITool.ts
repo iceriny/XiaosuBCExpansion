@@ -73,23 +73,55 @@ export default class GUITool {
      * 根据组件类型绘制相应的界面元素。
      * @param Component 要绘制的组件对象。
      */
-    static DrawComponent(Component: Components) {
+    static DrawComponent(Component: Component) {
+        const DrawStrategy = this.GetDrawStrategy(Component);
+        DrawStrategy(Component);
+    }
+
+    /**
+     * 获取组件的绘制策略
+     * @param Component 要绘制的组件
+     * @returns 绘制策略
+     */
+    private static GetDrawStrategy(Component: Component): (Component: Component)=> void {
         switch (Component.type) {
+            case "label": {
+                return this.LabelDrawStrategy;
+            }
             case "button": {
-                const button = Component as Button;
-                this.DrawButton(button.SCRLocation, button.label, button.color, button.img, button.HoveringText, button.Disabled);
-                break;
+                return this.ButtonDrawStrategy;
             }
             case "checkbox": {
-                const checkbox = Component as Checkbox;
-                this.DrawCheckbox(checkbox.SCRLocation, checkbox.label, checkbox.Checked, checkbox.Disabled, checkbox.TextColor);
-                break;
-            }
-            case "label": {
-                const label = Component as Label;
-                this.DrawText(label.label, label.SCRLocation, label.color);
+                return this.CheckboxDrawStrategy;
             }
         }
+    }
+
+    /**
+     * 标题的绘制策略
+     * @param Component 传入的组件
+     */
+    private static LabelDrawStrategy(Component: Component) {
+        const label = Component as Label;
+        this.DrawText(label.label, label.SCRLocation, label.color);
+    }
+
+    /**
+     * 复选框的绘制策略
+     * @param Component 传入的组件
+     */
+    private static CheckboxDrawStrategy(Component: Component) {
+        const checkbox = Component as Checkbox;
+        this.DrawCheckbox(checkbox.SCRLocation, checkbox.label, checkbox.Checked, checkbox.Disabled, checkbox.TextColor);
+    }
+
+    /**
+     * 按钮的绘制策略
+     * @param Component 传入的组件
+     */
+    private static ButtonDrawStrategy(Component: Component) {
+        const button = Component as Button;
+        this.DrawButton(button.SCRLocation, button.label, button.color, button.img, button.HoveringText, button.Disabled);
     }
 
     /**

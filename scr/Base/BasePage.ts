@@ -28,7 +28,7 @@ export default abstract class BasePage {
     /** 子页面 */
     protected abstract subScreen: Map<string, BasePage>;
     /** 页面组件 */
-    protected abstract Components: Array<Components>;
+    protected abstract Components: Array<Component>;
 
     /**
      * 生成一个新的子页面
@@ -145,7 +145,7 @@ export default abstract class BasePage {
      * 设置本页面的组件
      * @param components 要添加的组件
      */
-    protected SetComponents(...components: Array<Components>): void {
+    protected SetComponents(...components: Array<Component>): void {
         components.forEach(c => this.Components.push(c));
     }
 
