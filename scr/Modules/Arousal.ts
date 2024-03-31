@@ -75,7 +75,7 @@ export default class ArousalModule extends BaseModule {
     private HookList(): void {
         // 处理高潮余韵等级的增加
         HookManager.setHook('ActivityOrgasmStart', 'AftertasteSet', 2, (args) => {
-            if(!(args[0] as Character).IsPlayer() && !ActivityOrgasmRuined) return;
+            if(!(args[0] as Character).IsPlayer() && ActivityOrgasmRuined) return;
 
             const addedNumber = ActivityOrgasmGameResistCount + 1;
             this.Aftertaste = this._aftertaste + addedNumber;
