@@ -1,3 +1,4 @@
+import Settings from "../Setting/Setting";
 
 
 /**
@@ -10,6 +11,7 @@ export default abstract class BaseModule {
         priority: -999,
         description: "模块基类，所有的模块都继承这个模块"
     }
+    protected Setting: Settings | undefined;
     /** 模块是否加载完成 */
     public Loaded: boolean = false;
 

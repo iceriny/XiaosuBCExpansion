@@ -22,7 +22,7 @@ export default class DataManager {
     /**
      * 静态只读成员变量，包含需要从设置中获取的属性键名列表
      */
-    private static readonly settingKeys: settingKeys = ['enabled'];
+    private static readonly settingKeys: settingKeys = ['enabled', 'IsReviseOrgasmTime'];
 
     /**
      * 静态只读成员变量，包含需要在本地持久化存储的属性键名列表
@@ -35,7 +35,8 @@ export default class DataManager {
         'version', 
         'hasWombTattoos', 
         'aftertaste', 
-        'enabled'
+        'enabled',
+        'IsReviseOrgasmTime'
     ];
      /**
      * 初始化方法，用于创建并初始化一个 DataBody 实例，并将其挂载到全局 window.XSBE_Data 上以便访问
@@ -50,6 +51,7 @@ export default class DataManager {
             resistCount: 0,
             aftertasteEffect: new Set(),
             progress: 0,
+            IsReviseOrgasmTime: false as boolean
         }, this.onlineKeys, this.settingKeys, this.localKeys)
 
         window.XSBE_Data = DataManager.private_data
@@ -65,7 +67,7 @@ export default class DataManager {
      * @param name 需要获取的数据项名称
      */
     static get(name: keyof IDataBody) {
-        this.private_data.get(name)
+        return this.private_data.get(name)
     }
     /**
      * 设置数据

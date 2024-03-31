@@ -44,7 +44,7 @@ type XSBE_Settings = {
     [key: string]: unknown
 }
 type onlineKeys = ['version', 'hasWombTattoos', 'aftertaste'];
-type settingKeys = ['enabled'];
+type settingKeys = ['enabled', 'IsReviseOrgasmTime'];
 type localKeys = ['timestamp', 'resistCount', 'aftertasteEffect', 'progress', ...onlineKeys, ...settingKeys];
 
 // type ArousalSettings = 
@@ -58,6 +58,7 @@ interface IDataBody {
     resistCount: number;
     progress: number;
     aftertasteEffect: Set<AftertasteEffect>;
+    IsReviseOrgasmTime: boolean;
 }
 
 type AftertasteEffect = 'relax' | 'weakness' | 'twitch' | 'trance' | 'absentminded'

@@ -2,6 +2,22 @@
  * GUITool 类提供了一系列用于创建和管理图形用户界面元素的静态方法。
  */
 export default class GUITool {
+    /**
+     * 设置主画布的文本对齐方式
+     * @param testAlign 要设置的文本对齐方式
+     * 类型为CanvasTextAlign:  "center" | "end" | "left" | "right" | "start"
+     */
+    static set TextAlign(testAlign: CanvasTextAlign) {
+        MainCanvas.textAlign = testAlign; // 设置主画布的文本对齐方式
+    }
+
+    /**
+     * 获取主画布当前的文本对齐方式
+     * @returns 返回主画布当前的文本对齐方式
+     */
+    static get TextAlign() {
+        return MainCanvas.textAlign;
+    }
 
     /**
      * 检查给定的坐标是否在鼠标范围内。
@@ -83,7 +99,7 @@ export default class GUITool {
      * @param Component 要绘制的组件
      * @returns 绘制策略
      */
-    private static GetDrawStrategy(Component: Component): (Component: Component)=> void {
+    private static GetDrawStrategy(Component: Component): (Component: Component) => void {
         switch (Component.type) {
             case "label": {
                 return this.LabelDrawStrategy;
@@ -122,22 +138,5 @@ export default class GUITool {
     private static ButtonDrawStrategy(Component: Component) {
         const button = Component as Button;
         this.DrawButton(button.SCRLocation, button.label, button.color, button.img, button.HoveringText, button.Disabled);
-    }
-
-    /**
-     * 设置主画布的文本对齐方式
-     * @param testAlign 要设置的文本对齐方式
-     * 类型为CanvasTextAlign:  "center" | "end" | "left" | "right" | "start"
-     */
-    static set TextAlign(testAlign: CanvasTextAlign) {
-        MainCanvas.textAlign = testAlign; // 设置主画布的文本对齐方式
-    }
-
-    /**
-     * 获取主画布当前的文本对齐方式
-     * @returns 返回主画布当前的文本对齐方式
-     */
-    static get TextAlign() {
-        return MainCanvas.textAlign;
     }
 }

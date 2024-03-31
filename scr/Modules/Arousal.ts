@@ -1,4 +1,5 @@
 import BaseModule from "../Base/BaseModule";
+import Settings from "../Setting/Setting";
 import AssetManager from "../Utilities/Manager/AssetManager";
 import DataManager from "../Utilities/Manager/DataManager";
 import HookManager from "../Utilities/Manager/HookManager";
@@ -52,6 +53,8 @@ export default class ArousalModule extends BaseModule {
         // setTimeout(() => {
         //     BCT_API.ActivityChatRoomBCTArousalSync(Player);
         // }, 1200);
+
+        this.Setting = new Settings('IsReviseOrgasmTime');
     }
 
     //public getArousalSettings = (C: Character | PlayerCharacter): ArousalSettingsType | undefined => C.ArousalSettings;

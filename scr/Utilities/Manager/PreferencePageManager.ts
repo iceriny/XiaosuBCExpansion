@@ -5,8 +5,6 @@ import GUITool from "../GUITool";
 import MainPage from "../../Screen/Preference/MainPage";
 
 
-
-
 export default class PreferencePageManager {
     static SettingButtonPosition: SCRLocation = [1815, 175, 90, 90];
     static mainPage: MainPage | undefined;
@@ -51,7 +49,5 @@ export default class PreferencePageManager {
         }
         this.mainPage = undefined;
     }
-
-
 }
 
