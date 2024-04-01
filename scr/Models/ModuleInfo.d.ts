@@ -1,4 +1,4 @@
-export interface ModuleInfo {
+interface ModuleInfo {
     /**
      * 模块名
      */
@@ -7,9 +7,9 @@ export interface ModuleInfo {
     description: string;
 }
 
-export type moduleName = 'base' | 'WombTattoosModule' | 'ArousalModule'
+type moduleName = 'base' | 'WombTattoosModule' | 'ArousalModule'
 
-export enum ModulePriority {
+enum ModulePriority {
     Bottom = -100,
     Observe = 0,
     AddBehavior = 1,

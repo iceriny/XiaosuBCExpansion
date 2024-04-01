@@ -1,6 +1,5 @@
 import bcModSDKRef from "bondage-club-mod-sdk";
 import * as ModInfo from "../Models/ModInfo";
-import * as Info from "../Models/SDKInfo";
 
 
 //   VVVVVVVVVVVVVVVVVVVVVVVVVVVVV  ----SDK----  VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV    //
@@ -10,7 +9,8 @@ export const bcModSDK = bcModSDKRef.registerMod({
     version: XSBE_VERSION.startsWith("v") ? XSBE_VERSION.slice(1) : XSBE_VERSION,
     repository: ModInfo.REPOSITORY_URL
 });
-export function hookFunction(target: string, priority: Info.HookPriority, hook:Info.PatchHook): () => void {
+export function hookFunction(target: string, priority: HookPriority, hook: PatchHook): () => void {
+    // @ts-expect-error: 兼容1.2.0modSDK
     const removeCallback = bcModSDK.hookFunction(target, priority, hook);
     return removeCallback;
 }
