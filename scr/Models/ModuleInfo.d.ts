@@ -9,11 +9,12 @@ interface ModuleInfo {
 
 type moduleName = 'base' | 'WombTattoosModule' | 'ArousalModule'
 
-enum ModulePriority {
-    Bottom = -100,
-    Observe = 0,
-    AddBehavior = 1,
-    ModifyBehavior = 5,
-    OverrideBehavior = 10,
-    Top = 100
-}
+type ModulePriority = -999 | 0 | 1 | 5 | 10 | 999
+//  {
+//     Bottom : -999,
+//     Observe : 0,
+//     AddBehavior : 1,
+//     ModifyBehavior : 5,
+//     OverrideBehavior: 10,
+//     Top : 999
+// }
