@@ -32,7 +32,7 @@ export default class TimerProcessInjector {
     }
 
     public static Run(): void {
-        hookFunction("TimerProcess", 100, (args, next) => {
+        hookFunction("TimerProcess", 999, (args, next) => {
             this.activatedProcess = [];
 
             const currentTime = Date.now();

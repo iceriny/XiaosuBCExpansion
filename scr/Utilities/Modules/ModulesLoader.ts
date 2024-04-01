@@ -1,14 +1,13 @@
 /** @模块加载器 */
 
 import BaseModule from "../../Base/BaseModule";
-import * as MInfo from "../../Models/ModuleInfo";
 import ArousalModule from "../../Modules/Arousal";
 import WombTattoosModule from "../../Modules/WombTattoos";
 import { conDebug } from "../Utilities";
 
 export default class ModulesLoader {
     /** @模块集合 用于加载模块 */
-    private static modules = new Map<MInfo.moduleName, BaseModule>();
+    private static modules = new Map<moduleName, BaseModule>();
     /** @模块列表 用于注册模块 并排序*/
     private static modulesList: BaseModule[] = [];
 
@@ -22,7 +21,7 @@ export default class ModulesLoader {
     public static registerModule() {
         for (const n in this.modulesBuilder) {
             if (n === 'base') continue;
-            const module = this.modulesBuilder[n as MInfo.moduleName]();
+            const module = this.modulesBuilder[n as moduleName]();
             this.modulesList.push(module);
         }
         this.modulesList.sort((a, b) => {
@@ -71,25 +70,25 @@ export default class ModulesLoader {
      * @param name 需要获取的模块名字
      * @returns 获取到的模块
      */
-    public static getModule<T extends BaseModule>(name: MInfo.moduleName): T {
+    public static getModule<T extends BaseModule>(name: moduleName): T {
         return this.modules.get(name) as T;
     }
 
 
     /** @模块生成器 用于生成模块 */
-    private static modulesBuilder: { [key in MInfo.moduleName]: () => BaseModule } = {
+    private static modulesBuilder: { [key in moduleName]: () => BaseModule } = {
         base: () => { throw new Error("BaseModule 不应该被创建") },
         WombTattoosModule: () => {
             return new WombTattoosModule({
                 name: "WombTattoosModule",
-                priority: MInfo.ModulePriority.Observe,
+                priority: 0,
                 description: "淫纹相关的模块。修改与拓展了游戏淫纹的功能。"
             })
         },
         ArousalModule: () => {
             return new ArousalModule({
                 name: "ArousalModule",
-                priority: MInfo.ModulePriority.Observe,
+                priority: 0,
                 description: "Arousal模块。修改与拓展了游戏Arousal的功能。包括高潮等机制。"
             })
         }

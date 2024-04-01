@@ -14,7 +14,7 @@ function initWait() {
     });
     if (CurrentScreen == null || CurrentScreen === 'Login') {
         // 加载模组
-        hookFunction('LoginResponse', -100, (args, next) => {
+        hookFunction('LoginResponse', -999, (args, next) => {
             const result = next(args);
             conDebug({
                 name: `Init! Login Response caught`,

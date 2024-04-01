@@ -96,7 +96,7 @@ export default class HookManager {
      */
     private static addHook(functionName: string, completeHookItem: CompleteHookItem) {
         // 调用hookFunction函数，传入需要hook的函数名和参数
-        const topRemoveCallback = hookFunction(functionName, 100, (args, next) => {
+        const topRemoveCallback = hookFunction(functionName, 999, (args, next) => {
             let topLastResult = null;
             for (const item of completeHookItem[0]) {
                 const result = item.code(args, topLastResult);
@@ -128,7 +128,7 @@ export default class HookManager {
 
 
         });
-        const bottomRemoveCallback = hookFunction(functionName, -100, (args, next) => {
+        const bottomRemoveCallback = hookFunction(functionName, -999, (args, next) => {
             const OtherLastResult = next(args);
             let bottomLastResult = OtherLastResult;
             for (const item of completeHookItem[1]) {
