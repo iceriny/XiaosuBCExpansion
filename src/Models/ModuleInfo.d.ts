@@ -7,7 +7,7 @@ interface ModuleInfo {
     description: string;
 }
 
-type moduleName = 'base' | 'WombTattoosModule' | 'ArousalModule'
+type moduleName = 'base' | 'WombTattoosModule' | 'ArousalModule' | 'RoomLockModule';
 
 type ModulePriority = -999 | 0 | 1 | 5 | 10 | 999
 //  {

@@ -1,5 +1,6 @@
 /** @模块加载器 */
 
+import RoomLockModule from "Modules/RoomLock";
 import BaseModule from "../../Base/BaseModule";
 import ArousalModule from "../../Modules/Arousal";
 import WombTattoosModule from "../../Modules/WombTattoos";
@@ -91,7 +92,14 @@ export default class ModulesLoader {
                 priority: 0,
                 description: "Arousal模块。修改与拓展了游戏Arousal的功能。包括高潮等机制。"
             })
-        }
+        },
+        RoomLockModule: () => {
+            return new RoomLockModule({
+                name: "RoomLockModule",
+                priority: 0,
+                description: "RoomLock模块。修改与拓展了游戏RoomLock的功能。"
+            })
+        },
     }
 
 }

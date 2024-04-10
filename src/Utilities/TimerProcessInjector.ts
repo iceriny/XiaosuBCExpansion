@@ -50,6 +50,7 @@ export default class TimerProcessInjector {
                         this.activatedProcess.push(name);
                     }
                 }
+                
                 if (typeof item.interval === "function") {
                     item.nextInterval = item.interval();
                 }

@@ -1,35 +1,61 @@
-import { DataBody } from "../Base/Data"
-
+import { DataBody } from "../Base/Data";
 
 export default class DataManager {
     private static private_data: DataBody<IDataBody>;
-    private static readonly onlineKeys: onlineKeys = ['version', 'hasWombTattoos', 'aftertaste'];
-    private static readonly settingKeys: settingKeys = ['enabled'];
-    private static readonly localKeys: localKeys = ['timestamp', 'resistCount', 'aftertasteEffect', 'progress', 'version', 'hasWombTattoos', 'aftertaste', 'enabled'];
+    private static readonly onlineKeys: onlineKeys = [
+        "version",
+        "hasWombTattoos",
+        "aftertaste"
+    ];
+    private static readonly settingKeys: settingKeys = ["enabled"];
+    private static readonly localKeys: localKeys = [
+        "timestamp",
+        "resistCount",
+        "aftertasteEffect",
+        "progress",
+        "roomLock",
+        "roomLockTime",
+        "version",
+        "hasWombTattoos",
+        "aftertaste",
+        "enabled",
+    ];
 
     public static Init() {
-        DataManager.private_data = new DataBody({
-            version: XSBE_VERSION,
-            timestamp: 0,
-            enabled: false as boolean,
-            hasWombTattoos: false as boolean,
-            aftertaste: 0,
-            resistCount: 0,
-            aftertasteEffect: new Set(),
-            progress: 0,
-        }, this.onlineKeys, this.settingKeys, this.localKeys)
+        DataManager.private_data = new DataBody(
+            {
+                version: XSBE_VERSION,
+                timestamp: 0,
+                enabled: false as boolean,
+                hasWombTattoos: false as boolean,
+                aftertaste: 0,
+                resistCount: 0,
+                aftertasteEffect: new Set(),
+                progress: 0,
+                roomLock: false as boolean,
+                roomLockTime: 0,
+            },
+            this.onlineKeys,
+            this.settingKeys,
+            this.localKeys
+        );
 
-        window.XSBE_Data = DataManager.private_data
+        window.XSBE_Data = DataManager.private_data;
     }
 
     static get data() {
-        return DataManager.private_data
+        return DataManager.private_data;
     }
 
-    static get(name: keyof IDataBody) {
-        this.private_data.get(name)
+    static get<K extends keyof IDataBody>(name: K) {
+        return this.private_data.get(name);
     }
-    static set<K extends keyof IDataBody>(key: K, value: IDataBody[K], upload: boolean = false, updateLocalTimestamp: boolean = true) {
-        this.private_data.set(key, value, upload, updateLocalTimestamp)
+    static set<K extends keyof IDataBody>(
+        key: K,
+        value: IDataBody[K],
+        upload: boolean = false,
+        updateLocalTimestamp: boolean = true
+    ) {
+        this.private_data.set(key, value, upload, updateLocalTimestamp);
     }
 }
