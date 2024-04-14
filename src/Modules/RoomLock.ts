@@ -13,7 +13,7 @@ export default class RoomLockModule extends BaseModule {
             Description: "如果你被禁止离开了~ 用这个来解锁房间哦~",
             Action: (args, msg, parsed) => {
                 if (parsed.length === 1) {
-                    const SecretKey = parsed[0];
+                    const SecretKey = msg.replace(/^\/unlockingroom\s+/, "");
                     const SecretKeyInfo = this.decryptSecretKeyInfo(SecretKey);
                     if (SecretKeyInfo) {
                         this.usedKey(SecretKeyInfo);
@@ -38,7 +38,7 @@ export default class RoomLockModule extends BaseModule {
     private get Locked() {
         return this._locked;
     }
-    private _timeToEndTime: number = 0;
+    private _timeToEndTime: number = -1;
     /** 秘钥剩余时间 */
     private set TimeToEndTime(value: number) {
         this._timeToEndTime = value;
@@ -49,8 +49,19 @@ export default class RoomLockModule extends BaseModule {
     }
 
     private HookList() {
-        HookManager.setHook("ChatRoomCanLeave", "detectWhetherToLock", 999, (args) => {
-            if (this.Locked) {
+        // HookManager.setHook("ChatRoomCanLeave", "detectWhetherToLock", 999, (args) => {
+        //     if (this.Locked) {
+        //         return { args: args, result: false };
+        //     }
+        //     return;
+        // });
+
+        HookManager.patchAdd("ChatRoomMenuDraw", {
+            "ChatRoomCanLeave() && ChatRoomIsLeavingSlowly()":
+                "(ChatRoomCanLeave() && ChatRoomIsLeavingSlowly()) || Player.XSBE.roomLock",
+        });
+        HookManager.setHook("ChatRoomAttemptLeave", "TheRoomLocksToPreventLeavingTheRoom", 999, () => {
+            if (this.Loaded) {
                 MSGManager.SendLocalMessage("你被禁止离开。\n 求求你主人索要密码吧~", 5000);
                 setTimeout(() => {
                     MSGManager.SendLocalMessage("哦对~ 如果你不知道如何解锁...", 5000);
@@ -58,15 +69,13 @@ export default class RoomLockModule extends BaseModule {
                         MSGManager.SendLocalMessage("问问你主人吧~~", 5000);
                     }, 1000);
                 }, 3000);
-                return { args: args, result: false };
             }
-            return;
         });
 
         HookManager.setHook("ChatRoomMessage", "LockedRoom", 0, (args) => {
             const msg = args[0] as ServerChatRoomMessage;
             if (msg.Type === "Whisper" && msg.Sender === Player.Ownership?.MemberNumber) {
-                const match = msg.Content.match(/^!(禁止|允许)离开$/);
+                const match = msg.Content.match(/^@(禁止|允许)离开$/);
                 if (match) {
                     switch (match[1]) {
                         case "允许":
@@ -89,7 +98,7 @@ export default class RoomLockModule extends BaseModule {
         `{source}难耐的双腿颤抖着，身体的每一处都充满快感.`,
         `{source}拼命咬住牙齿，却从鼻腔泄露出诱人的声音.`,
         `{source}在汹涌的快感下浑身粉红，奋力的想要忍住高潮.`,
-        `{source}浑身颤抖的抵抗高潮的逼近.`
+        `{source}浑身颤抖的抵抗高潮的逼近.`,
     ];
     private get PenaltyInformationList() {
         return this.penaltyInformationList[Math.floor(Math.random() * this.penaltyInformationList.length)];
@@ -100,6 +109,7 @@ export default class RoomLockModule extends BaseModule {
             0,
             60000,
             () => {
+                if (this.TimeToEndTime === -1) return false;
                 return Date.now() > this.TimeToEndTime;
             },
             {
@@ -121,7 +131,7 @@ export default class RoomLockModule extends BaseModule {
             {
                 name: "PunishmentOfSuperSecretKey",
                 code: () => {
-                    MSGManager.SendActivity(this.PenaltyInformationList, Player.MemberNumber!)
+                    MSGManager.SendActivity(this.PenaltyInformationList, Player.MemberNumber!);
                 },
             }
         );
@@ -140,12 +150,20 @@ export default class RoomLockModule extends BaseModule {
      * @param key 秘钥
      */
     private usedKey(key: SecretKeyInfo) {
-        if (this.isKeysAffirmed(key)) {
+        const { result, iDPassed, startTimePassed, limitTimePassed } = this.isKeysAffirmed(key);
+        if (result) {
             this.Locked = false;
             this.TimeToEndTime = key.startTime + key.limitTime;
 
             MSGManager.SendLocalMessage("解锁成功！", 5000);
             MSGManager.SendLocalMessage(`秘钥到期时间: ${this.formatTimestamp(this.TimeToEndTime)}`);
+        } else {
+            MSGManager.SendLocalMessage(
+                `秘钥无法使用哦~\n原因: \n${iDPassed ? "" : "ID不匹配"} ${startTimePassed ? "" : "秘钥未到生效时间"} ${
+                    limitTimePassed ? "" : "秘钥过期"
+                }`,
+                5000
+            );
         }
     }
 
@@ -177,12 +195,21 @@ export default class RoomLockModule extends BaseModule {
      * @param key 秘钥
      * @returns 秘钥在生效范围之内
      */
-    private isKeysAffirmed(key: SecretKeyInfo) {
-        if (key.id !== Player.Ownership?.MemberNumber) return false;
-        if (key.startTime > Date.now()) return false;
-        if (key.startTime + key.limitTime < Date.now()) return false;
+    private isKeysAffirmed(key: SecretKeyInfo): {
+        result: boolean;
+        iDPassed: boolean;
+        startTimePassed: boolean;
+        limitTimePassed: boolean;
+    } {
+        let iDPassed = false;
+        let startTimePassed = false;
+        let limitTimePassed = false;
+        if (key.id === Player.Ownership?.MemberNumber) iDPassed = true;
+        if (key.startTime <= Date.now()) startTimePassed = true;
+        if (key.startTime + key.limitTime >= Date.now()) limitTimePassed = true;
 
-        return true;
+        const result = iDPassed && startTimePassed && limitTimePassed;
+        return { result, iDPassed, startTimePassed, limitTimePassed };
     }
 
     // VVV 加密解密函数与方法 VVV //
