@@ -274,7 +274,7 @@ export class DataBody<T extends IDataBody> {
      * @returns 本地空间的键
      */
     getLocalKeyFromKey(key: keyof T): string {
-        return `XSBE_${key as string}`;
+        return `XSBE_${Player.MemberNumber}_${key as string}`;
     }
     /**
      * 将时间戳保存到本地空间

@@ -131,20 +131,7 @@ export default class RoomLockModule extends BaseModule {
             }
         });
     }
-    private startPunishment = false;
 
-    private penaltyInformationList = [
-        `{source}脚趾一蜷一缩，难耐的交织.`,
-        `{source}闭眼忍耐，鼻息中泄露出粉红的喘息.`,
-        `{source}蜷缩脚趾忍耐着连续的快感.`,
-        `{source}难耐的双腿颤抖着，身体的每一处都充满快感.`,
-        `{source}拼命咬住牙齿，却从鼻腔泄露出诱人的声音.`,
-        `{source}在汹涌的快感下浑身粉红，奋力的想要忍住高潮.`,
-        `{source}浑身颤抖的抵抗高潮的逼近.`,
-    ];
-    private get PenaltyInformationList() {
-        return this.penaltyInformationList[Math.floor(Math.random() * this.penaltyInformationList.length)];
-    }
 
     private TimerProcess() {
         // 秘钥过期检测
@@ -182,12 +169,29 @@ export default class RoomLockModule extends BaseModule {
             }
         );
     }
+    private startPunishment = false;
+
+    private penaltyInformationList = [
+        `电流从{source}的全身蔓延开来，{source}浑身抽搐了几下.`,
+        `{source}闭眼忍耐，从身上荡漾着的电流.`,
+        `惩罚的电流似乎没有这么强，但{source}还是发出一声闷哼.`,
+        `{source}难耐的双腿颤抖着，身体的每一处都充满酥麻的感觉.`,
+        `{source}拼命咬住牙齿，却从鼻腔泄露出略带痛苦的声音.`,
+        `{source}在汹涌的电流下浑身颤抖，几乎要失禁了.`,
+        `{source}被源源不断的电流折腾的无法控制的失禁了.`,
+    ];
+    private get PenaltyInformationList() {
+        return this.penaltyInformationList[Math.floor(Math.random() * this.penaltyInformationList.length)];
+    }
 
     /**
      * 单次惩罚动作
      */
     private punishmentAction(): void {
         MSGManager.SendActivity(this.PenaltyInformationList, Player.MemberNumber!);
+        AudioPlayInstantSound("Audio/Shocks.mp3");
+        DrawFlashScreen("#FFC6E8", 1000, 500);
+        DialogLeave()
     }
 
     /**
