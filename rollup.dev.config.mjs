@@ -8,7 +8,7 @@ import packageJson from "./package.json" assert { type: "json" };
 import json from "@rollup/plugin-json";
 
 export default {
-  input: './scr/main.ts', // 入口文件路径
+  input: './src/main.ts', // 入口文件路径
   output: {
     file: 'dist/dev/XSBCExpansion.dev.js', // 输出文件路径
     format: 'iife', // 输出格式
