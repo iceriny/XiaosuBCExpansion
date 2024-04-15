@@ -4,17 +4,18 @@ import { hookFunction, patchFunction, removePatches } from "./BCSDK";
 // import * as Utils from "../Utilities/Utilities";
 
 /**
- * 完整的钩子项 
+ * 完整的钩子项
  */
-type CompleteHookItem = [top: HookItem<HookItemContent>,
+type CompleteHookItem = [
+    top: HookItem<HookItemContent>,
     bottom: HookItem<HookItemContent>,
     topHookSet: Set<string>,
-    removeCallback?: [top?: () => void, bottom?: () => void]]
+    removeCallback?: [top?: () => void, bottom?: () => void]
+];
 /**
  * Hook管理器
  */
 export default class HookManager {
-
     /**
      * 钩子映射表
      */
@@ -32,7 +33,12 @@ export default class HookManager {
      * @param priority 钩子优先级
      * @param code 钩子函数中运行的代码
      */
-    static setHook(functionName: string, name: string, priority: number, code: (args: unknown[], lastResult: unknown) => codeResult | void) {
+    static setHook(
+        functionName: string,
+        name: string,
+        priority: number,
+        code: (args: unknown[], lastResult: unknown) => codeResult | void,
+    ) {
         // 获取函数对应的钩子项
         const hookItem = HookManager._hookMap.get(functionName);
         if (hookItem) {
@@ -47,8 +53,7 @@ export default class HookManager {
             if (priority >= 0) {
                 topItem.add(name, { priority, code });
                 _item[2].add(name);
-            }
-            else bottom.add(name, { priority, code });
+            } else bottom.add(name, { priority, code });
 
             HookManager.addHook(functionName, _item);
             HookManager._hookMap.set(functionName, _item);
@@ -75,7 +80,6 @@ export default class HookManager {
                 if (hookItem[2].has(name)) this._hookMap.get(functionName)?.[3]?.[0]?.();
                 else hookItem[3]?.[1]?.();
                 this._hookMap.delete(functionName);
-
             }
         }
     }
@@ -101,6 +105,7 @@ export default class HookManager {
             for (const item of completeHookItem[0]) {
                 const result = item.code(args, topLastResult);
                 if (result !== undefined) {
+                    if (result.interrupt) return result.result;
                     // 更新参数
                     args = result.args;
                     if (result.result !== undefined) topLastResult = result.result;
@@ -125,8 +130,6 @@ export default class HookManager {
 
             // 调用下一个函数并返回结果
             // const result = next(args);
-
-
         });
         const bottomRemoveCallback = hookFunction(functionName, -999, (args, next) => {
             const OtherLastResult = next(args);
@@ -134,6 +137,7 @@ export default class HookManager {
             for (const item of completeHookItem[1]) {
                 const result = item.code(args, bottomLastResult);
                 if (result !== undefined) {
+                    if (result.interrupt) return result.result;
                     // 更新参数
                     args = result.args;
                     if (result.result !== undefined) bottomLastResult = result.result;
@@ -156,7 +160,7 @@ export default class HookManager {
             // // 否则返回原函数的结果
             // return result;
         });
-        completeHookItem[3] = [topRemoveCallback, bottomRemoveCallback]
+        completeHookItem[3] = [topRemoveCallback, bottomRemoveCallback];
     }
 
     public static patchAdd(functionName: string, patches: Record<string, string | null>) {
@@ -178,7 +182,8 @@ interface HookItemContent {
 type codeResult = {
     args: unknown[];
     result?: unknown;
-}
+    interrupt?: boolean;
+};
 
 class HookItem<T extends HookItemContent> implements Iterable<T> {
     // 存储 HookItem 的映射关系
@@ -188,16 +193,16 @@ class HookItem<T extends HookItemContent> implements Iterable<T> {
     // 存储 HookItem 的数量
     size: number;
 
-    constructor(...item: { name: string, content: T }[]) {
+    constructor(...item: { name: string; content: T }[]) {
         // 初始化 itemMap
-        this.itemMap = {}
+        this.itemMap = {};
         // 初始化 itemSequence
         this.itemSequence = [];
         // 初始化 size
         this.size = 0;
-        item.forEach(item => {
+        item.forEach((item) => {
             this.add(item.name, item.content);
-        })
+        });
     }
 
     // 添加 HookItem
@@ -205,7 +210,7 @@ class HookItem<T extends HookItemContent> implements Iterable<T> {
         // 将 content 添加到 itemMap 中
         this.itemMap[name] = content;
         // 查找插入位置
-        let index = this.itemSequence.findIndex(item => this.itemMap[item].priority < content.priority);
+        let index = this.itemSequence.findIndex((item) => this.itemMap[item].priority < content.priority);
         if (index === -1) {
             // 如果找不到比插入值更小的元素，说明插入值最小，放在数组末尾
             index = this.size;
@@ -232,7 +237,7 @@ class HookItem<T extends HookItemContent> implements Iterable<T> {
         const resultList: codeResult[] = [];
         // 遍历 itemSequence，调用回调函数
         for (const key of this.itemSequence) {
-            const callbackResult = callback(this.itemMap[key], key)
+            const callbackResult = callback(this.itemMap[key], key);
             if (callbackResult) {
                 resultList.push(callbackResult);
                 if (callbackResult.result) return resultList;
@@ -245,7 +250,7 @@ class HookItem<T extends HookItemContent> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T> {
         let index = 0;
         const keys = this.itemSequence;
-        const map = this.itemMap
+        const map = this.itemMap;
         return {
             next(): IteratorResult<T> {
                 if (index < keys.length) {
@@ -255,7 +260,7 @@ class HookItem<T extends HookItemContent> implements Iterable<T> {
                     // 如果没有元素，返回结束状态
                     return { done: true, value: undefined };
                 }
-            }
+            },
         };
     }
 }

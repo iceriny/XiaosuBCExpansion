@@ -76,7 +76,7 @@ export default class RoomLockModule extends BaseModule {
             "ChatRoomCanLeave() && ChatRoomIsLeavingSlowly()":
                 "(ChatRoomCanLeave() && ChatRoomIsLeavingSlowly()) || Player.XSBE.roomLock",
         });
-        HookManager.setHook("ChatRoomAttemptLeave", "TheRoomLocksToPreventLeavingTheRoom", 999, () => {
+        HookManager.setHook("ChatRoomAttemptLeave", "TheRoomLocksToPreventLeavingTheRoom", 999, (args) => {
             if (this.Loaded) {
                 MSGManager.SendLocalMessage("你被禁止离开。\n 求求你主人索要密码吧~", 5000);
                 setTimeout(() => {
@@ -85,7 +85,9 @@ export default class RoomLockModule extends BaseModule {
                         MSGManager.SendLocalMessage("问问你主人吧~~", 5000);
                     }, 1000);
                 }, 3000);
+                return {args, interrupt: true}
             }
+            return;
         });
 
         HookManager.setHook("ChatRoomMessage", "LockedRoom", 0, (args) => {
