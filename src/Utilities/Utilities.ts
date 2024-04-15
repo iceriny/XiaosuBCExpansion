@@ -149,3 +149,11 @@ export function setAPI(name: string, value: unknown): void {
         window.XSBE_API = { [name]: value }
     }
 }
+/**
+ * 返回列表中随机的一个元素
+ * @param list 待选择的列表
+ * @returns 随机的一个元素
+ */
+export function SelectRandomItem<T>(list: Array<T>): T {
+    return list[Math.floor(Math.random() * list.length)];
+}

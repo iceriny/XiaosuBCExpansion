@@ -3,6 +3,7 @@ import DataManager from "Utilities/DataManager";
 import HookManager from "Utilities/HookManager";
 import MSGManager from "Utilities/MessageManager";
 import TimerProcessInjector from "Utilities/TimerProcessInjector";
+import { SelectRandomItem } from "Utilities/Utilities";
 
 export default class RoomLockModule extends BaseModule {
     public Init(): void {}
@@ -72,7 +73,10 @@ export default class RoomLockModule extends BaseModule {
         // 禁止离开
         HookManager.setHook("ChatRoomAttemptLeave", "TheRoomLocksToPreventLeavingTheRoom", 999, (args) => {
             if (this.Locked) {
-                MSGManager.SendLocalMessage("身体中突然涌现出主人的魔力，阻止你离开房间。\n求求你主人索要魔法秘钥吧~", 5000);
+                MSGManager.SendLocalMessage(
+                    "身体中突然涌现出主人的魔力，阻止你离开房间。\n求求你主人索要魔法秘钥吧~",
+                    5000
+                );
                 setTimeout(() => {
                     MSGManager.SendLocalMessage("哦对~ 如果你不知道如何暂时抑制魔法...", 5000);
                     setTimeout(() => {
@@ -132,7 +136,6 @@ export default class RoomLockModule extends BaseModule {
         });
     }
 
-
     private TimerProcess() {
         // 秘钥过期检测
         TimerProcessInjector.add(
@@ -180,10 +183,19 @@ export default class RoomLockModule extends BaseModule {
         `{source}在汹涌的电流下浑身颤抖，几乎要失禁了.`,
         `{source}被源源不断的电流折腾的无法控制的失禁了.`,
     ];
-    private get PenaltyInformationList() {
-        return this.penaltyInformationList[Math.floor(Math.random() * this.penaltyInformationList.length)];
+    private get PenaltyInformationList(): string {
+        return SelectRandomItem(this.penaltyInformationList);
     }
 
+    private penaltyChatCodaList = [
+        "...啊!",
+        "...嗯!..",
+        "..哼..姆..",
+        "..噢!."
+    ]
+    private get PenaltyChatCoda(): string {
+        return SelectRandomItem(this.penaltyChatCodaList);
+    }
     /**
      * 单次惩罚动作
      */
@@ -191,7 +203,12 @@ export default class RoomLockModule extends BaseModule {
         MSGManager.SendActivity(this.PenaltyInformationList, Player.MemberNumber!);
         AudioPlayInstantSound("Audio/Shocks.mp3");
         DrawFlashScreen("#FFC6E8", 1000, 500);
-        DialogLeave()
+        DialogLeave();
+
+        const text = ElementValue("InputChat");
+        if (text !== "") ElementValue("InputChat", `${text}${this.PenaltyChatCoda}`);
+        else if (Math.random() < 0.5) ElementValue("InputChat", this.PenaltyChatCoda);
+        ChatRoomSendChat();
     }
 
     /**
