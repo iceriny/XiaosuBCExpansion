@@ -29,7 +29,6 @@ export default class RoomLockModule extends BaseModule {
         this.TimerProcess();
     }
 
-    private _locked: boolean = false;
     /** 是否禁止离开 */
     private set Locked(value: boolean) {
         this._locked = value;
@@ -38,7 +37,9 @@ export default class RoomLockModule extends BaseModule {
     private get Locked() {
         return this._locked;
     }
-    private _timeToEndTime: number = -1;
+    private _locked: boolean = false;
+
+
     /** 秘钥剩余时间 */
     private set TimeToEndTime(value: number) {
         this._timeToEndTime = value;
@@ -47,6 +48,21 @@ export default class RoomLockModule extends BaseModule {
     private get TimeToEndTime() {
         return this._timeToEndTime;
     }
+    private _timeToEndTime: number = -1;
+
+    /** 禁止离开的房间名 */
+    private set LockedRoomName(value: string) {
+        this._lockedRoomName = value;
+        DataManager.set("roomLockRoomName", value, true, true);
+    }
+    private get LockedRoomName() {
+        return this._lockedRoomName;
+    }
+    private _lockedRoomName: string = "";
+
+
+    /** 惩罚倒计时的SetTimerID */
+    private punishmentTimerId: number = -1;
 
     private HookList() {
         // HookManager.setHook("ChatRoomCanLeave", "detectWhetherToLock", 999, (args) => {
@@ -80,14 +96,31 @@ export default class RoomLockModule extends BaseModule {
                     switch (match[1]) {
                         case "允许":
                             this.Locked = false;
+                            this.LockedRoomName = "";
                             break;
                         case "禁止":
                             this.Locked = true;
+                            this.LockedRoomName = ChatRoomData !== null ? ChatRoomData.Name : "";
                             break;
                     }
                 }
             }
         });
+
+        HookManager.setHook("ChatRoomSync", "CheckWhetherItIsALockingRoom", 0, (args) => {
+            const roomData = args[0] as ServerChatRoomSyncMessage;
+            if (roomData.Name === this.LockedRoomName && this.TimeToEndTime !== -1) {
+                // TODO: 检测是否是锁定的房间
+                this.TimeToEndTime = -1;
+                this.Locked = true;
+                this.startPunishment = false;
+
+                if (this.punishmentTimerId !== -1) {
+                    clearTimeout(this.punishmentTimerId);
+                    this.punishmentTimerId = -1;
+                }
+            }
+        })
     }
     private startPunishment = false;
 
@@ -110,18 +143,21 @@ export default class RoomLockModule extends BaseModule {
             60000,
             () => {
                 if (this.TimeToEndTime === -1) return false;
-                return Date.now() > this.TimeToEndTime;
+                return Date.now() > this.TimeToEndTime
             },
             {
                 name: "CheckIfTheKeyIsExpired",
                 code: () => {
                     MSGManager.SendLocalMessage("秘钥过期了！30s后将开始惩罚! 请尽快离开当前房间!", 6000);
-                    setTimeout(() => {
-                        this.startPunishment = true;
-                    }, 30000);
+                    if (this.punishmentTimerId !== -1) {
+                        this.punishmentTimerId = setTimeout(() => {
+                            this.startPunishment = true;
+                        }, 30000);
+                    }
                 },
             }
         );
+        /* 一秒一次的惩罚，通过 this.startPunishment 变量触发 */ 
         TimerProcessInjector.add(
             0,
             1000,
@@ -131,10 +167,17 @@ export default class RoomLockModule extends BaseModule {
             {
                 name: "PunishmentOfSuperSecretKey",
                 code: () => {
-                    MSGManager.SendActivity(this.PenaltyInformationList, Player.MemberNumber!);
+                    this.punishmentAction();
                 },
             }
         );
+    }
+
+    /**
+     * 单次惩罚动作
+     */
+    private punishmentAction():void {
+        MSGManager.SendActivity(this.PenaltyInformationList, Player.MemberNumber!);
     }
 
     /**
@@ -143,6 +186,7 @@ export default class RoomLockModule extends BaseModule {
     private getModuleData(): void {
         this._locked = DataManager.get("roomLock");
         this._timeToEndTime = DataManager.get("roomLockTime");
+        this._lockedRoomName = DataManager.get("roomLockRoomName");
     }
 
     /**

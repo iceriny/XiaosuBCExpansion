@@ -44,7 +44,7 @@ type XSBE_Settings = {
 }
 type onlineKeys = ['version', 'hasWombTattoos', 'aftertaste'];
 type settingKeys = ['enabled'];
-type localKeys = ['timestamp', 'resistCount', 'aftertasteEffect', 'progress', 'roomLock', 'roomLockTime', ...onlineKeys, ...settingKeys];
+type localKeys = ['timestamp', 'resistCount', 'aftertasteEffect', 'progress', 'roomLock', 'roomLockTime', 'roomLockRoomName', ...onlineKeys, ...settingKeys];
 
 // type ArousalSettings = 
 
@@ -59,6 +59,7 @@ interface IDataBody {
     aftertasteEffect: Set<AftertasteEffect>;
     roomLock: boolean;
     roomLockTime: number;
+    roomLockRoomName:string;
 }
 
 type AftertasteEffect = 'relax' | 'weakness' | 'twitch' | 'trance' | 'absentminded'
