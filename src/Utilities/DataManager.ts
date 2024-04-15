@@ -34,7 +34,7 @@ export default class DataManager {
                 aftertasteEffect: new Set(),
                 progress: 0,
                 roomLock: false as boolean,
-                roomLockTime: 0,
+                roomLockTime: -1,
                 roomLockRoomName: "",
             },
             this.onlineKeys,
