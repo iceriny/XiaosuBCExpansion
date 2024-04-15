@@ -73,6 +73,7 @@ export default class RoomLockModule extends BaseModule {
         // 禁止离开
         HookManager.setHook("ChatRoomAttemptLeave", "TheRoomLocksToPreventLeavingTheRoom", 999, (args) => {
             if (this.Locked) {
+                MSGManager.SendActivity("{source}被体内的魔力禁锢，弹回了房间。", Player.MemberNumber!)
                 MSGManager.SendLocalMessage(
                     "身体中突然涌现出主人的魔力，阻止你离开房间。\n求求你主人索要魔法秘钥吧~",
                     5000
