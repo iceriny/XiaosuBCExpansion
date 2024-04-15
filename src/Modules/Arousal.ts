@@ -168,7 +168,8 @@ export default class ArousalModule extends BaseModule {
                     firstChar !== "." &&
                     firstChar !== "@" &&
                     firstChar !== "`" &&
-                    firstChar !== "!"
+                    firstChar !== "!" &&
+                    firstChar !== "#"
                 ) {
                     const segmentList = segmentForCH(msg);
                     if (segmentList === null) {

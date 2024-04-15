@@ -91,7 +91,7 @@ export default class RoomLockModule extends BaseModule {
         HookManager.setHook("ChatRoomMessage", "LockedRoom", 0, (args) => {
             const msg = args[0] as ServerChatRoomMessage;
             if (msg.Type === "Whisper" && msg.Sender === Player.Ownership?.MemberNumber) {
-                const match = msg.Content.match(/^@(禁止|允许)离开$/);
+                const match = msg.Content.match(/^#(禁止|允许)离开$/);
                 if (match) {
                     switch (match[1]) {
                         case "允许":
@@ -232,6 +232,7 @@ export default class RoomLockModule extends BaseModule {
 
             MSGManager.SendLocalMessage("解锁成功！", 5000);
             MSGManager.SendLocalMessage(`秘钥到期时间: ${this.formatTimestamp(this.TimeToEndTime)}`);
+            if (key.content !== "无") MSGManager.SendLocalMessage(`留言: ${key.content}`);
         } else {
             MSGManager.SendLocalMessage(
                 `秘钥无法使用哦~\n原因: \n${iDPassed ? "" : "ID不匹配"} ${startTimePassed ? "" : "秘钥未到生效时间"} ${
