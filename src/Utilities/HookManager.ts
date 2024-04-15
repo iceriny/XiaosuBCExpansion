@@ -113,23 +113,7 @@ export default class HookManager {
             }
             if (topLastResult !== null) return topLastResult;
             return next(args);
-            // // 遍历顶部钩子函数
-            // const topItemResult: codeResult[] = completeHookItem[0].forEach((item): codeResult | void => {
-            //     // Utils.conDebug(`${functionName}: name: ${name}`);
-            //     // 运行钩子函数
-            //     const itemResult = item.code(args);
-            //     if (itemResult) {
-            //         // 更新参数
-            //         args = itemResult.args;
-            //         return itemResult;
-            //     }
-            // });
-            // 取出最后一个函数的结果 如果存在则返回结果
-            // const topLastResult = topItemResult.length === 0 ? null : topItemResult[topItemResult.length - 1].result;
-            // if (topLastResult) return topLastResult;
 
-            // 调用下一个函数并返回结果
-            // const result = next(args);
         });
         const bottomRemoveCallback = hookFunction(functionName, -999, (args, next) => {
             const OtherLastResult = next(args);
@@ -144,21 +128,6 @@ export default class HookManager {
                 }
             }
             return bottomLastResult;
-            // // 遍历完成钩子的参数
-            // const bottomItemResult: codeResult[] = completeHookItem[1].forEach((item): codeResult | void => {
-            //     // 运行钩子函数
-            //     const itemResult = item.code(args);
-            //     if (itemResult) {
-            //         // 更新参数
-            //         args = itemResult.args;
-            //         return itemResult;
-            //     }
-            // });
-            // // 取出最后一个函数的结果 如果存在则返回结果
-            // const bottomLastResult = bottomItemResult.length === 0 ? null : bottomItemResult[bottomItemResult.length - 1].result;
-            // if (bottomLastResult) return bottomLastResult;
-            // // 否则返回原函数的结果
-            // return result;
         });
         completeHookItem[3] = [topRemoveCallback, bottomRemoveCallback];
     }
